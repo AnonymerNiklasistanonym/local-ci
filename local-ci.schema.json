@@ -1,0 +1,104 @@
+{
+  "type": "object",
+  "required": ["stages"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "The name of the stage"
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["jobs"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the stage"
+          },
+          "mandatory": {
+            "type": "boolean",
+            "description": "Always run this stage, even when filter is applied"
+          },
+          "explicit": {
+            "type": "boolean",
+            "description": "Only run this stage if explicitly requested"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "A label to filter stages"
+            }
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["commands"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the job"
+                },
+                "commands": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "description": "Commands that should be run in order after each other"
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "description": "Commands that should be run in order after each other"
+                      }
+                    ]
+                  }
+                },
+                "cwd": {
+                  "type": "string",
+                  "description": "Directory in which the commands should be run"
+                },
+                "mandatory": {
+                  "type": "boolean",
+                  "description": "Always run this job, even when filter is applied"
+                },
+                "explicit": {
+                  "type": "boolean",
+                  "description": "Only run this job if explicitly requested"
+                },
+                "labels": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "A label to filter jobs"
+                  }
+                },
+                "allowedToFail": {
+                  "type": "boolean",
+                  "description": "On failure continue do not stop and continue with the next stage"
+                }
+              },
+              "title": "Job",
+              "description": "A job runs a sequence of commands",
+              "additionalProperties": false
+            }
+          }
+        },
+        "title": "Stage",
+        "description": "A stage runs jobs in parallel",
+        "additionalProperties": false
+      }
+    }
+  },
+  "title": "Config",
+  "description": "A config contains all information to run a local CI, meaning a list of stages",
+  "additionalProperties": false
+}

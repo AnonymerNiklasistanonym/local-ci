@@ -1,0 +1,60 @@
+{
+  "$schema": "./local-ci.schema.json",
+  "name": "local-ci",
+  "stages": [
+    {
+      "name": "install",
+      "mandatory": true,
+      "jobs": [
+        {
+          "name": "npm depdendencies",
+          "commands": [["npm", "ci"]]
+        }
+      ]
+    },
+    {
+      "name": "check",
+      "jobs": [
+        {
+          "name": "format",
+          "commands": [["npm", "run", "format:check"]],
+          "cwd": "."
+        },
+        {
+          "name": "format:fix",
+          "explicit": true,
+          "allowedToFail": true,
+          "labels": ["fix"],
+          "commands": [["npm", "run", "format"]]
+        },
+        {
+          "name": "lint",
+          "commands": [["npm", "run", "lint:check"]]
+        },
+        {
+          "name": "lint:fix",
+          "explicit": true,
+          "labels": ["fix"],
+          "commands": [["npm", "run", "lint"]]
+        },
+        {
+          "name": "typecheck",
+          "commands": [["npm", "run", "typecheck"]]
+        },
+        {
+          "name": "test",
+          "commands": [["npm", "run", "test"]]
+        }
+      ]
+    },
+    {
+      "name": "build",
+      "jobs": [
+        {
+          "name": "build",
+          "commands": [["npm", "run", "build"]]
+        }
+      ]
+    }
+  ]
+}

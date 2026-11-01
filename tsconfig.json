@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    // Defaults
+    "target": "ES2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["ES2023"],
+    "outDir": "dist",
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "declaration": false,
+    "types": ["node"],
+
+    // React/JSX support
+    "jsx": "react-jsx",
+    //"moduleResolution": "bundler",
+
+    // Other
+    "verbatimModuleSyntax": true, // Forces explicit `import type`, preventing Node type stripping runtime errors
+    "isolatedModules": true, // Ensures compatibility with single-file transpilers (tsx, esbuild)
+    "noEmit": false // If you only use tsx/Node native execution, set to true and use tsc --noEmit for type checking
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
