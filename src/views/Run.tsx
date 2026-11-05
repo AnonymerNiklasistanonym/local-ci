@@ -1,48 +1,21 @@
-import { Box, Text, useApp, useInput, useWindowSize, type TextProps } from 'ink';
+import { Box, Text, useApp, useInput, useWindowSize } from 'ink';
 import type { Config } from '../config/config.js';
 import { useEffect, useState } from 'react';
 import { useJobs } from './hooks/useJobs.js';
-import { defaultTheme, extendTheme, ProgressBar, ThemeProvider } from '@inkjs/ui';
-import type { JobStatus } from '../worker/types.js';
+import { ProgressBar, ThemeProvider } from '@inkjs/ui';
 import type { Logger } from 'pino';
 import { TerminalWindow } from './components/TerminalWindow.js';
+import { statusColor, statusIcon } from './constants/status.js';
+import { progressBarTheme } from './constants/themes.js';
 
-interface InfoViewProps {
+interface RunViewProps {
   config: Config;
   configFile: string;
   logger: Logger;
   interactive: boolean;
 }
 
-const statusIcon: Record<JobStatus, string> = {
-  running: '⟳',
-  success: '✓',
-  error: '✗',
-  warning: '!',
-  created: '+',
-};
-
-const statusColor: Record<JobStatus, string> = {
-  running: 'blue',
-  success: 'green',
-  error: 'red',
-  warning: 'yellow',
-  created: 'gray',
-};
-
-const progressBarTheme = extendTheme(defaultTheme, {
-  components: {
-    ProgressBar: {
-      styles: {
-        completed: (): TextProps => ({
-          color: 'blue',
-        }),
-      },
-    },
-  },
-});
-
-export function RunView({ config, configFile: _configFile, logger, interactive }: InfoViewProps) {
+export function RunView({ config, configFile: _configFile, logger, interactive }: RunViewProps) {
   const { columns } = useWindowSize();
   const { done, stages, jobs } = useJobs({ stages: config.stages, logger });
   const { exit } = useApp();
@@ -167,7 +140,9 @@ export function RunView({ config, configFile: _configFile, logger, interactive }
               // TODO Add time (running/executed)
               // TODO Add exit code (in general and for each command)
               title={activeJobNameDisplay}
-              subtitle={statusIcon[activeJob.status]}
+              subtitle={
+                (activeJob.timeWorkerMs ? `[${activeJob.timeWorkerMs}ms] ` : ' ') + statusIcon[activeJob.status]
+              }
             >
               {activeJob.logs.map(([type, message], i) =>
                 type === 'command' ? (

@@ -3,7 +3,8 @@
 import { parentPort, workerData, threadId } from 'worker_threads';
 
 import { spawn } from 'child_process';
-import type { WorkerMessage, WorkerData } from './worker/types.js';
+import type { WorkerData } from './worker/data.js';
+import type { WorkerMessage } from './worker/messages.js';
 import { appendFileSync } from 'fs';
 import { join } from 'path';
 import pkg from '../package.json' with { type: 'json' };
@@ -37,6 +38,7 @@ const send = (msg: WorkerMessage) => {
 parentPort!.once('message', async (msgHost) => {
   log('received host message', msgHost);
   send({ type: 'start', jobId, threadId, commands, cwd });
+  const startedAt = performance.now();
 
   try {
     let indexCommand = 0;
@@ -49,6 +51,7 @@ parentPort!.once('message', async (msgHost) => {
       let shell: boolean;
 
       const logs: ['stdout' | 'stderr' | 'command', string][] = [];
+      const startedAtCommand = performance.now();
 
       if (typeof command === 'string') {
         // Shell mode: pass the whole string, let the shell parse it
@@ -113,6 +116,7 @@ parentPort!.once('message', async (msgHost) => {
             code: 1,
             logs,
             progress: (indexCommand / commands.length) * 100,
+            timeWorkerMs: performance.now() - startedAtCommand,
           });
           resolve(1);
         });
@@ -125,12 +129,18 @@ parentPort!.once('message', async (msgHost) => {
             code: code ?? 0,
             logs,
             progress: (indexCommand / commands.length) * 100,
+            timeWorkerMs: performance.now() - startedAtCommand,
           });
           resolve(code ?? 0);
         });
       });
     }
-    send({ type: 'done', jobId, code: currentExitCode });
+    send({
+      type: 'done',
+      jobId,
+      code: currentExitCode,
+      timeWorkerMs: performance.now() - startedAt,
+    });
     log('done');
   } catch (err) {
     send({
@@ -138,7 +148,12 @@ parentPort!.once('message', async (msgHost) => {
       jobId,
       text: err instanceof Error ? err.message : JSON.stringify(err),
     });
-    send({ type: 'done', jobId, code: -1 });
+    send({
+      type: 'done',
+      jobId,
+      code: -1,
+      timeWorkerMs: performance.now() - startedAt,
+    });
   }
 });
 

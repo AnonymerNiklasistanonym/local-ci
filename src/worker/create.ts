@@ -1,5 +1,6 @@
 import { Worker } from 'worker_threads';
-import type { WorkerData, WorkerMessage } from './types.js';
+import type { WorkerData } from './data.js';
+import type { WorkerMessage } from './messages.js';
 import { join } from 'path';
 import type { Job } from '../config/config.js';
 import type { Logger } from 'pino';

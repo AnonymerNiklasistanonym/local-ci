@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import type { Worker } from 'worker_threads';
 import type { Job, Stage } from '../../config/config.js';
 import { createWorkerJob } from '../../worker/create.js';
-import type { JobState, StageState, WorkerMessage } from '../../worker/types.js';
+import type { JobState, StageState } from '../../worker/states.js';
+import type { WorkerMessage } from '../../worker/messages.js';
 import type { Logger } from 'pino';
 
 interface UseJobsProps {
@@ -110,7 +111,7 @@ export function useJobs({ stages, logger }: UseJobsProps) {
                 }
                 if (msg.type === 'done:command') {
                   logger.debug({ jobId, exitCode: msg.code, msg }, 'worker done with command');
-                  return { ...prevJob, progress: msg.progress, logs: msg.logs };
+                  return { ...prevJob, progress: msg.progress, logs: msg.logs, timeWorkerMs: msg.timeWorkerMs };
                 }
                 if (msg.type === 'error') {
                   logger.error({ jobId, msg }, 'worker encountered an error');
@@ -124,6 +125,7 @@ export function useJobs({ stages, logger }: UseJobsProps) {
                     ...prevJob,
                     progress: 100,
                     status: msg.code === 0 ? 'success' : job.allowedToFail ? 'warning' : 'error',
+                    timeWorkerMs: msg.timeWorkerMs,
                   };
                 }
                 if (msg.type === 'exit') {

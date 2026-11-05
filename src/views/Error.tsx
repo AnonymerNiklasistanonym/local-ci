@@ -1,23 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Box, Text, useApp } from 'ink';
 import { ConfigError } from '../config/configError.js';
 
 interface ErrorViewProps {
   error?: Error | ConfigError;
 }
-
-const createErrorStack = (error: unknown): string[] => {
-  const stacks: string[] = [];
-  let current: unknown = error;
-  while (current instanceof Error) {
-    const stack = current.stack
-      ? `${current.name}: ${current.message}\n${current.stack.split('\n').slice(1).join('\n')}`
-      : `${current.name}: ${current.message}`;
-    stacks.push(stack);
-    current = (current as { cause?: unknown }).cause;
-  }
-  return stacks;
-};
 
 export function ErrorView({ error }: ErrorViewProps) {
   const { exit } = useApp();
@@ -26,7 +13,19 @@ export function ErrorView({ error }: ErrorViewProps) {
     exit(1);
   }, [exit]);
 
-  const errorStack = createErrorStack(error);
+  const errorStack = useMemo(() => {
+    const stacks: string[] = [];
+    let current: unknown = error;
+    while (current instanceof Error) {
+      const stack = current.stack
+        ? `${current.name}: ${current.message}\n${current.stack.split('\n').slice(1).join('\n')}`
+        : `${current.name}: ${current.message}`;
+      stacks.push(stack);
+      current = (current as { cause?: unknown }).cause;
+    }
+    return stacks;
+  }, [error]);
+
   const errorStackComponent = errorStack.map((stack, i) => (
     <Box key={i} flexDirection="column">
       {i > 0 && (
