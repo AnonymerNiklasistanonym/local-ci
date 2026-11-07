@@ -1,5 +1,5 @@
 import { readFile } from 'fs/promises';
-import { ConfigT } from './config.js';
+import { ConfigT, type Config } from './config.js';
 import Compile from 'typebox/compile';
 import { ConfigError } from './configError.js';
 import { parse, printParseErrorCode, visit, type ParseErrorCode, type ParseError } from 'jsonc-parser';
@@ -14,7 +14,7 @@ export interface ParseErrorExtended {
   content: string;
 }
 
-export const readConfigFile = async (path: string) => {
+export const readConfigFile = async (path: string): Promise<Config> => {
   try {
     const validator = Compile(ConfigT);
     const raw = await readFile(path, 'utf-8');

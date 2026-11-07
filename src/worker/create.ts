@@ -2,34 +2,40 @@ import { Worker } from 'worker_threads';
 import type { WorkerData } from './data.js';
 import type { WorkerMessage } from './messages.js';
 import { join } from 'path';
-import type { Job } from '../config/config.js';
 import type { Logger } from 'pino';
 
-const workerPath =
-  typeof __WORKER_PATH__ !== 'undefined' ? __WORKER_PATH__ : join(import.meta.dirname, '..', 'worker.js');
+/** The worker path may be different when bundled */
+const workerPath = typeof __WORKER_PATH__ !== 'undefined' ? __WORKER_PATH__ : join(import.meta.dirname, 'worker.js');
 
-export const createWorkerJob = (
-  job: Job,
-  jobId: string,
+// TODO Move more into here and with a better structure
+
+/**
+ * Create a worker for a job to be executed
+ */
+export const createWorker = (
+  workerData: WorkerData,
   onMessage: (msg: WorkerMessage) => void,
   logger: Logger,
-  logToFile = false,
-) => {
+): Worker => {
   const worker = new Worker(new URL(workerPath, import.meta.url), {
-    workerData: {
-      jobId,
-      commands: job.commands,
-      cwd: job.cwd,
-      logToFile,
-    } satisfies WorkerData,
-    name: jobId,
+    workerData,
+    name: workerData.jobId,
   });
+  // Log all channels
   worker.on('message', (msg: WorkerMessage) => {
     onMessage(msg);
   });
-  worker.on('exit', (code) => logger.debug({ code }, 'parent saw worker exit'));
-  worker.on('error', (err) => logger.error(err));
-  // Trigger the worker instead of just starting
-  worker.postMessage('something', []);
+  worker.on('messageerror', (err) => {
+    logger.error(err, 'worker messageerror');
+  });
+  worker.on('online', () => {
+    logger.debug('worker online');
+  });
+  worker.on('exit', (code) => {
+    logger.debug({ code }, 'worker exit');
+  });
+  worker.on('error', (err) => {
+    logger.error(err, 'worker error');
+  });
   return worker;
 };

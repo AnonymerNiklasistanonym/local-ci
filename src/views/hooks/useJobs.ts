@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Worker } from 'worker_threads';
 import type { Job, Stage } from '../../config/config.js';
-import { createWorkerJob } from '../../worker/create.js';
+import { createWorker } from '../../worker/create.js';
 import type { JobState, StageState } from '../../worker/states.js';
 import type { WorkerMessage } from '../../worker/messages.js';
 import type { Logger } from 'pino';
@@ -26,7 +26,11 @@ export function useJobs({ stages, logger }: UseJobsProps) {
     // Create a wrapper function around starting a worker that can be awaited
     const createWorkerJobWrapper = (job: Job, jobId: string, onMessage: (msg: WorkerMessage) => void) =>
       new Promise<{ code?: number; jobId: string; job: Job }>((resolve, reject) => {
-        const worker = createWorkerJob(job, jobId, onMessage, logger, true);
+        const worker = createWorker(
+          { commands: job.commands, jobId, logToFile: logger.level === 'debug' },
+          onMessage,
+          logger,
+        );
         logger.debug({ jobId, job }, 'Create worker job');
         workersRef.current.push(worker);
         let code: number | undefined = undefined;
@@ -37,6 +41,8 @@ export function useJobs({ stages, logger }: UseJobsProps) {
           }
         });
         worker.on('exit', () => resolve({ code, jobId, job }));
+        // Trigger worker
+        worker.postMessage('trigger', []);
       });
 
     (async () => {
@@ -83,8 +89,8 @@ export function useJobs({ stages, logger }: UseJobsProps) {
                   // throw Error(`Job with the ID ${msg.jobId} does not exist!`);
                   return prevJob;
                 }
-                if (prevJob.status !== 'running' && prevJob.status !== 'created') {
-                  logger.warn('Tried to update a job that was not running any more');
+                if (prevJob.status !== 'running' && prevJob.status !== 'created' && msg.type !== 'exit') {
+                  logger.warn({ msg }, 'Tried to update a job that was not running any more');
                   return prevJob;
                 }
                 if (msg.type === 'start') {
@@ -111,7 +117,13 @@ export function useJobs({ stages, logger }: UseJobsProps) {
                 }
                 if (msg.type === 'done:command') {
                   logger.debug({ jobId, exitCode: msg.code, msg }, 'worker done with command');
-                  return { ...prevJob, progress: msg.progress, logs: msg.logs, timeWorkerMs: msg.timeWorkerMs };
+                  return {
+                    ...prevJob,
+                    progress: msg.progress,
+                    logs: msg.logs,
+                    timeWorkerMs: msg.timeWorkerMs,
+                    exitCode: msg.code,
+                  };
                 }
                 if (msg.type === 'error') {
                   logger.error({ jobId, msg }, 'worker encountered an error');
@@ -126,6 +138,7 @@ export function useJobs({ stages, logger }: UseJobsProps) {
                     progress: 100,
                     status: msg.code === 0 ? 'success' : job.allowedToFail ? 'warning' : 'error',
                     timeWorkerMs: msg.timeWorkerMs,
+                    exitCode: msg.code,
                   };
                 }
                 if (msg.type === 'exit') {
@@ -171,7 +184,7 @@ export function useJobs({ stages, logger }: UseJobsProps) {
     // Cleanup
     return () => {
       logger.debug('Terminate all workers');
-      // TODO Terminate if everything works
+      // Terminate all workers
       workers.forEach((w) => w.terminate());
       workers.length = 0;
     };

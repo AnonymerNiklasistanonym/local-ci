@@ -7,16 +7,16 @@ export const createLogger = (file?: string, logLevel: LevelWithSilent = 'silent'
     level: logLevel,
     transport: {
       targets: [
+        // Console output
         {
-          // Console output
           target: isDevelopment ? 'pino-pretty' : 'pino/file',
-          level: isDevelopment ? 'info' : 'warn',
+          level: 'warn',
           options: { destination: 1 }, // 1 represents STDOUT
         },
+        // Optional file output (JSON format)
         ...(file
           ? [
               {
-                // File output (JSON format)
                 target: 'pino/file',
                 level: 'debug',
                 options: { destination: file, mkdir: true },

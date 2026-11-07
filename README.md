@@ -16,6 +16,8 @@ One of the reasons why this was created is that Powershell is horrible at runnin
 > - [x] Create a file log on demand
 > - [ ] Button to rerun pipeline (if in interactive mode)
 > - [ ] Update design
+> - [ ] If it fails in non-interactive render error log as is
+> - [ ] Select first failed (not allowed to fail) job when jobs fail
 
 ```
 Usage: local-ci [options] [mode]

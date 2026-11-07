@@ -25,6 +25,7 @@
     "@inkjs/ui": "^2.0.0",
     "@oliveryasuna/ink-frame-scroll": "^1.0.0",
     "commander": "^15.0.0",
+    "fullscreen-ink": "^0.1.0",
     "ink": "^8.0.0",
     "jsonc-parser": "^3.3.1",
     "log-update": "^8.0.0",

@@ -7,6 +7,8 @@ import type { Logger } from 'pino';
 import { TerminalWindow } from './components/TerminalWindow.js';
 import { statusColor, statusIcon } from './constants/status.js';
 import { progressBarTheme } from './constants/themes.js';
+import { humanTime } from '../utils/human.js';
+import { createJobStateDisplayName, createJobStateInfo } from './helper/state.js';
 
 interface RunViewProps {
   config: Config;
@@ -61,7 +63,6 @@ export function RunView({ config, configFile: _configFile, logger, interactive }
   }, [done]);
 
   const activeJob = jobs.find((a) => a.id === activeJobTracker?.id);
-  const activeJobNameDisplay = activeJob && activeJob?.name ? `${activeJob.name} (${activeJob.id})` : activeJob?.id;
 
   return (
     <Box flexDirection="column">
@@ -130,19 +131,15 @@ export function RunView({ config, configFile: _configFile, logger, interactive }
       </Box>
 
       {/* Current job's log area */}
-      {activeJob && activeJobNameDisplay && (
+      {activeJob && (
         <Box flexDirection="column">
           {activeJob?.logs.length === 0 ? (
             <Text dimColor>Waiting for output...</Text>
           ) : (
             <TerminalWindow
               color={statusColor[activeJob.status]}
-              // TODO Add time (running/executed)
-              // TODO Add exit code (in general and for each command)
-              title={activeJobNameDisplay}
-              subtitle={
-                (activeJob.timeWorkerMs ? `[${activeJob.timeWorkerMs}ms] ` : ' ') + statusIcon[activeJob.status]
-              }
+              title={createJobStateDisplayName(activeJob)}
+              subtitle={createJobStateInfo(activeJob)}
             >
               {activeJob.logs.map(([type, message], i) =>
                 type === 'command' ? (

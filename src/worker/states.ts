@@ -18,6 +18,8 @@ export interface JobState extends WorkerState {
   logs: ['stdout' | 'stderr' | 'command', string][];
   /** How many commands were already run */
   progress: number;
+  /** Current/Final exit code */
+  exitCode?: number;
 }
 
 /** Messages sent from Worker to main thread */

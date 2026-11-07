@@ -4,6 +4,8 @@ import { render } from 'ink';
 import { App } from '../App.js';
 import { createLogger } from '../logger.js';
 import type { Logger } from 'pino';
+import { DEV, PRODUCTION } from '../env.js';
+import { withFullScreen } from 'fullscreen-ink';
 
 export type Mode = 'info' | 'run';
 
@@ -12,6 +14,7 @@ export interface CommandOptions {
   interactive: boolean;
   verbose: boolean;
   only?: string[];
+  fullscreen: boolean;
 }
 
 export const command = new Command()
@@ -25,6 +28,7 @@ export const command = new Command()
   )
   .option('-v, --verbose', 'show extra info', false)
   .option('-i, --interactive', 'do not close the program if its done to inspect logs', false)
+  .option('-f, --fullscreen', 'render in fullscreen', false)
   .option('--config <path>', 'path to your local-ci config', `.${pkg.name}.json`)
   .option('--only <stages/labels...>', 'only run specific stages (build lint) or labels (:fix)')
   .action(async (mode: Mode, options: CommandOptions) => {
@@ -32,11 +36,19 @@ export const command = new Command()
     try {
       logger = createLogger(options.verbose ? `${pkg.name}.log` : undefined, options.verbose ? 'debug' : 'silent');
       if (options.verbose) {
-        console.log(`${pkg.name} v${pkg.version}`);
+        console.log(`${pkg.name} v${pkg.version}${DEV ? ' [dev build]' : ''}`);
+
         logger.info(`Create logs in ${`${pkg.name}.log`}`);
       }
-      const { waitUntilExit } = render(<App {...options} mode={mode} logger={logger} />);
-      const result = await waitUntilExit();
+      let result;
+      if (options.fullscreen) {
+        const ink = withFullScreen(<App {...options} mode={mode} logger={logger} />);
+        await ink.start();
+        result = await ink.instance.waitUntilExit();
+      } else {
+        const { waitUntilExit } = render(<App {...options} mode={mode} logger={logger} />);
+        result = await waitUntilExit();
+      }
       if (typeof result !== 'number') {
         throw Error(`Unexpected program exit value: ${JSON.stringify(result)}`);
       }

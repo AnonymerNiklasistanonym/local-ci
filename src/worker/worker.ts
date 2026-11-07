@@ -3,11 +3,11 @@
 import { parentPort, workerData, threadId } from 'worker_threads';
 
 import { spawn } from 'child_process';
-import type { WorkerData } from './worker/data.js';
-import type { WorkerMessage } from './worker/messages.js';
+import type { WorkerData } from './data.js';
+import type { WorkerMessage } from './messages.js';
 import { appendFileSync } from 'fs';
 import { join } from 'path';
-import pkg from '../package.json' with { type: 'json' };
+import pkg from '../../package.json' with { type: 'json' };
 
 // Get data with which the worker is started
 const { commands, cwd, jobId, logToFile } = workerData as WorkerData;
@@ -23,7 +23,7 @@ const log = (tag: string, extra?: unknown) => {
   try {
     appendFileSync(LOG_FILE, line);
   } catch {
-    // never let logging break the worker
+    // don't let logging errors stop the worker
   }
 };
 
