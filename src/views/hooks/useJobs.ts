@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Worker } from 'worker_threads';
 import type { Job, Stage } from '../../config/config.js';
 import { createWorker } from '../../worker/create.js';
@@ -19,6 +19,8 @@ export function useJobs({ stages, logger }: UseJobsProps) {
   const [done, setDone] = useState<'success' | 'warning' | 'error' | undefined>(undefined);
   /** All started workers */
   const workersRef = useRef<Worker[]>([]);
+  // Bumping this triggers a re-run from scratch
+  const [runId, setRunId] = useState(0);
 
   useEffect(() => {
     const workers = workersRef.current;
@@ -155,22 +157,37 @@ export function useJobs({ stages, logger }: UseJobsProps) {
         logger.debug('Wait until all promises were awaited');
         const results = await Promise.all(stagePromises);
         logger.debug({ results }, 'All promises were awaited');
-        const failedJobs = results.filter((a) => a.code !== 0);
-        const allowedToFailJobs = failedJobs.filter((a) => a.job.allowedToFail === true);
-        const status =
-          failedJobs.length === 0 ? 'success' : failedJobs.length === allowedToFailJobs.length ? 'warning' : 'error';
+        const failedJobsTotal = results.filter((a) => a.code !== 0);
+        const allowedToFailJobsTotal = failedJobsTotal.filter((a) => a.job.allowedToFail === true);
+        const statusTotal =
+          failedJobsTotal.length === 0
+            ? 'success'
+            : failedJobsTotal.length === allowedToFailJobsTotal.length
+              ? 'warning'
+              : 'error';
         setStages((prev) =>
-          prev.map((a) => ({
-            ...a,
-            progress: 100,
-            // TODO What if no success!
-            status,
-          })),
+          prev.map((stageState) => {
+            const stageJobs = results.filter((a) => a.jobId.startsWith(`${stageState.id}.`));
+            const failedJobs = stageJobs.filter((a) => a.code !== 0);
+            const allowedToFailJobs = failedJobs.filter((a) => a.job.allowedToFail === true);
+            const status =
+              failedJobs.length === 0
+                ? 'success'
+                : failedJobs.length === allowedToFailJobs.length
+                  ? 'warning'
+                  : 'error';
+            return {
+              ...stageState,
+              progress: 100,
+              // TODO What if no success!
+              status,
+            };
+          }),
         );
-        if (status === 'warning') {
+        if (statusTotal === 'warning') {
           pipelineStatus = 'warning';
         }
-        if (status === 'error') {
+        if (statusTotal === 'error') {
           pipelineStatus = 'error';
           break;
         }
@@ -188,7 +205,18 @@ export function useJobs({ stages, logger }: UseJobsProps) {
       workers.forEach((w) => w.terminate());
       workers.length = 0;
     };
+  }, [runId]);
+
+  const reset = useCallback(() => {
+    // Terminate any running workers so they don't keep posting messages
+    workersRef.current.forEach((w) => w.terminate());
+    workersRef.current = [];
+
+    setStages([]); // or a fresh initial value
+    setJobs([]);
+    setDone(undefined);
+    setRunId((prev) => prev + 1);
   }, []);
 
-  return { done, stages: stagesInternal, jobs };
+  return { done, stages: stagesInternal, jobs, reset };
 }

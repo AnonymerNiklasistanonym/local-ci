@@ -10,14 +10,17 @@ One of the reasons why this was created is that Powershell is horrible at runnin
 >
 > - [x] Log file support
 > - [x] Correct return value
-> - [ ] Show return value of commands in output/logs
+> - [x] Show return value of commands in output/logs
 > - [ ] Early exit on pipeline failure
 > - [ ] Filter jobs/stages
 > - [x] Create a file log on demand
-> - [ ] Button to rerun pipeline (if in interactive mode)
 > - [ ] Update design
-> - [ ] If it fails in non-interactive render error log as is
-> - [ ] Select first failed (not allowed to fail) job when jobs fail
+> - [x] If it fails in non-interactive render error log as is
+> - [x] Select first failed (not allowed to fail) job when jobs fail
+> - [x] Add buttons/keyboard key listeners (if in interactive mode)
+>   - [x] Button to rerun pipeline
+>   - [ ] Button to rerun job
+>   - [x] Copy the full log of the current job to the clipboard
 
 ```
 Usage: local-ci [options] [mode]

@@ -4,7 +4,7 @@ import { render } from 'ink';
 import { App } from '../App.js';
 import { createLogger } from '../logger.js';
 import type { Logger } from 'pino';
-import { DEV, PRODUCTION } from '../env.js';
+import { PRODUCTION } from '../env.js';
 import { withFullScreen } from 'fullscreen-ink';
 
 export type Mode = 'info' | 'run';
@@ -15,6 +15,11 @@ export interface CommandOptions {
   verbose: boolean;
   only?: string[];
   fullscreen: boolean;
+}
+
+export interface CommandReturnValue {
+  exitCode: number;
+  additionalOutput?: () => string;
 }
 
 export const command = new Command()
@@ -28,7 +33,7 @@ export const command = new Command()
   )
   .option('-v, --verbose', 'show extra info', false)
   .option('-i, --interactive', 'do not close the program if its done to inspect logs', false)
-  .option('-f, --fullscreen', 'render in fullscreen', false)
+  .option('-f, --fullscreen', 'render in fullscreen (clears screen on exit)', false)
   .option('--config <path>', 'path to your local-ci config', `.${pkg.name}.json`)
   .option('--only <stages/labels...>', 'only run specific stages (build lint) or labels (:fix)')
   .action(async (mode: Mode, options: CommandOptions) => {
@@ -36,25 +41,32 @@ export const command = new Command()
     try {
       logger = createLogger(options.verbose ? `${pkg.name}.log` : undefined, options.verbose ? 'debug' : 'silent');
       if (options.verbose) {
-        console.log(`${pkg.name} v${pkg.version}${DEV ? ' [dev build]' : ''}`);
+        console.log(`${pkg.name} v${pkg.version}${PRODUCTION ? '' : ' [dev build]'}`);
 
         logger.info(`Create logs in ${`${pkg.name}.log`}`);
       }
-      let result;
+
+      let result: CommandReturnValue;
       if (options.fullscreen) {
         const ink = withFullScreen(<App {...options} mode={mode} logger={logger} />);
         await ink.start();
-        result = await ink.instance.waitUntilExit();
+        result = (await ink.instance.waitUntilExit()) as CommandReturnValue;
       } else {
         const { waitUntilExit } = render(<App {...options} mode={mode} logger={logger} />);
-        result = await waitUntilExit();
+        result = (await waitUntilExit()) as CommandReturnValue;
       }
-      if (typeof result !== 'number') {
+
+      if (typeof result !== 'object' || typeof result.exitCode !== 'number') {
         throw Error(`Unexpected program exit value: ${JSON.stringify(result)}`);
       }
-      logger.info({ exitCode: result ?? 0 }, 'Program exit');
+      logger.info({ exitCode: result.exitCode }, 'Program exit');
+
+      if (typeof result === 'object' && result.additionalOutput !== undefined) {
+        console.log(result.additionalOutput());
+      }
+
       logger.flush();
-      process.exit(result ?? 0);
+      process.exit(result.exitCode);
     } catch (err) {
       console.error(err);
       if (logger) {

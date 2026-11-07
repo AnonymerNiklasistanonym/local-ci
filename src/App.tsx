@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
-import type { CommandOptions, Mode } from './cli/program.js';
+import type { CommandOptions, CommandReturnValue, Mode } from './cli/program.js';
 import { readConfigFile } from './config/readConfigFile.js';
 import { ErrorView } from './views/Error.js';
 import pkg from '../package.json' with { type: 'json' };
@@ -15,7 +15,15 @@ export interface AppProps extends CommandOptions {
   logger: Logger;
 }
 
-export function App({ mode, config: configFile = `.${pkg.name}.json`, logger, interactive }: AppProps) {
+export interface GenericViewProps {
+  config: Config;
+  configFile: string;
+  interactive: boolean;
+  fullscreen: boolean;
+  logger: Logger;
+}
+
+export function App({ mode, config: configFile = `.${pkg.name}.json`, logger, ...other }: AppProps) {
   const { exit } = useApp();
   const [error, setError] = useState<Error | undefined>();
   const [config, setConfig] = useState<Config>();
@@ -26,7 +34,7 @@ export function App({ mode, config: configFile = `.${pkg.name}.json`, logger, in
     if (input === 'q') {
       logger.debug('User pressed q to close the program');
       // Close with error in case this is part of a git hook
-      exit(1);
+      exit({ exitCode: 1 } satisfies CommandReturnValue);
     }
   });
 
@@ -50,22 +58,18 @@ export function App({ mode, config: configFile = `.${pkg.name}.json`, logger, in
   const content =
     config !== undefined ? (
       mode === 'info' ? (
-        <InfoView config={config} configFile={configFile} logger={logger} />
+        <InfoView config={config} configFile={configFile} logger={logger} {...other} />
       ) : (
-        <RunView config={config} configFile={configFile} logger={logger} interactive={interactive} />
+        <RunView config={config} configFile={configFile} logger={logger} {...other} />
       )
     ) : (
-      <Spinner label={`Loading ${pkg.name} config from '${configFile}'...`} />
-    );
-
-  return (
-    <Box flexDirection="column" padding={mode !== 'run' ? 1 : 0}>
-      {content}
-      {mode !== 'run' && (
+      <Box flexDirection="column" padding={1}>
+        <Spinner label={`Loading ${pkg.name} config from '${configFile}'...`} />
         <Box flexDirection="row" paddingTop={1}>
           <Text dimColor>Press "q" to exit</Text>
         </Box>
-      )}
-    </Box>
-  );
+      </Box>
+    );
+
+  return content;
 }

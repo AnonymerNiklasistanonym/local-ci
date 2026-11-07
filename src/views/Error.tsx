@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Box, Text, useApp } from 'ink';
 import { ConfigError } from '../config/configError.js';
+import type { CommandReturnValue } from '../cli/program.js';
 
 interface ErrorViewProps {
   error?: Error | ConfigError;
@@ -10,7 +11,7 @@ export function ErrorView({ error }: ErrorViewProps) {
   const { exit } = useApp();
 
   useEffect(() => {
-    exit(1);
+    exit({ exitCode: 1 } satisfies CommandReturnValue);
   }, [exit]);
 
   const errorStack = useMemo(() => {

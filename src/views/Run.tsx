@@ -1,60 +1,175 @@
-import { Box, Text, useApp, useInput, useWindowSize } from 'ink';
-import type { Config } from '../config/config.js';
+import { Box, renderToString, Text, useApp, useInput, useWindowSize } from 'ink';
 import { useEffect, useState } from 'react';
 import { useJobs } from './hooks/useJobs.js';
 import { ProgressBar, ThemeProvider } from '@inkjs/ui';
-import type { Logger } from 'pino';
 import { TerminalWindow } from './components/TerminalWindow.js';
-import { statusColor, statusIcon } from './constants/status.js';
+import { statusColor } from './constants/status.js';
 import { progressBarTheme } from './constants/themes.js';
-import { humanTime } from '../utils/human.js';
 import { createJobStateDisplayName, createJobStateInfo } from './helper/state.js';
+import type { CommandReturnValue } from '../cli/program.js';
+import type { GenericViewProps } from '../App.js';
+import type { JobState } from '../worker/states.js';
+import clipboardy from 'clipboardy';
+import { stripVTControlCharacters } from 'node:util';
 
-interface RunViewProps {
-  config: Config;
-  configFile: string;
-  logger: Logger;
-  interactive: boolean;
+interface RunViewProps extends GenericViewProps {
+  renderAsString?: boolean;
 }
 
-export function RunView({ config, configFile: _configFile, logger, interactive }: RunViewProps) {
-  const { columns } = useWindowSize();
-  const { done, stages, jobs } = useJobs({ stages: config.stages, logger });
-  const { exit } = useApp();
-  const [showProgressBar, setShowProgressBar] = useState(true);
+const copyLogs = (jobStage: JobState, stripAnsiSymbols: boolean = true) => {
+  const logsAsText = jobStage.logs
+    .map(([type, message]) => {
+      const updatedMessage = stripAnsiSymbols ? stripVTControlCharacters(message) : message;
+      return type === 'command' ? `$ ${updatedMessage}` : updatedMessage.trimEnd();
+    })
+    .join('\n');
 
-  const [activeJobTracker, setActiveJobTracker] = useState<{ id: string; index: number } | undefined>(undefined);
+  clipboardy.writeSync(logsAsText);
+};
+
+export function RunView({ config, configFile: _configFile, logger, interactive, fullscreen }: RunViewProps) {
+  const { columns } = useWindowSize();
+  const { done, stages, jobs, reset } = useJobs({ stages: config.stages, logger });
+  const { exit } = useApp();
+
+  const [activeJobTracker, setActiveJobTracker] = useState<{ id: string } | undefined>(undefined);
+
+  const showProgressBar = !done;
+  const showInstructions = interactive || !done;
 
   useInput((input, key) => {
-    const jobList = jobs.toSorted((a, b) => a.id.localeCompare(b.id));
+    const jobsSorted = jobs.toSorted((a, b) => a.id.localeCompare(b.id));
     if (key.leftArrow || key.rightArrow) {
       setActiveJobTracker((prev) => {
-        if (jobList.length === 0) return undefined;
-        let index;
-        if (prev === undefined) {
+        // Return nothing if there are no jobs
+        if (jobsSorted.length === 0) return undefined;
+        // Return either the first element or find the last one and then go to the next one
+        const previousIndex = jobsSorted.findIndex((a) => a.id === prev?.id);
+        let index: number;
+        if (previousIndex === undefined) {
           index = 0;
         } else {
-          index = (prev.index + (key.leftArrow ? -1 : 1) + jobList.length) % jobList.length;
+          index = (previousIndex + (key.leftArrow ? -1 : 1) + jobsSorted.length) % jobsSorted.length;
         }
-        return { id: jobList[index].id, index };
+        return { id: jobsSorted[index].id };
       });
+    }
+    // Press r to restart
+    if (input === 'r') {
+      reset();
+    }
+    // Press l to copy the current logs
+    if (input.toLowerCase() === 'l' && activeJob) {
+      copyLogs(activeJob, !key.shift);
     }
   });
 
   useEffect(() => {
+    if (done && activeJobTracker === undefined) {
+      switch (done) {
+        case 'warning':
+        case 'error':
+          // Go to the first job that failed/threw a warning
+          for (const job of jobs.toSorted((a, b) => a.id.localeCompare(b.id))) {
+            if (job.status === done) {
+              // TODO index?????
+              setActiveJobTracker({ id: job.id });
+              break;
+            }
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  }, [done, jobs]);
+
+  useEffect(() => {
+    const additionalOutput = () =>
+      renderToString(
+        <>
+          {/* Print stage status to the console after exiting the interactive render process */}
+          {/* TODO Move to its own component so there is no redundant code! */}
+          {fullscreen && (
+            <Box flexDirection="row" gap={2}>
+              {/* Stages */}
+              <Box flexDirection="column">
+                {stages.map((stage, i) => {
+                  const isActive = (activeJob?.id && activeJob.id.startsWith(stage.id)) || false;
+                  return (
+                    <Box flexDirection="row" key={i}>
+                      <Text color={'gray'} bold inverse={isActive}>
+                        {stage.id}{' '}
+                      </Text>
+                      <Text color={statusColor[stage.status]} bold inverse={isActive}>
+                        {stage.name}
+                      </Text>
+                    </Box>
+                  );
+                })}
+              </Box>
+              {/* Jobs */}
+              <Box flexDirection="column">
+                {stages.map((stage, indexStage) => {
+                  const stageJobs = jobs.filter((a) => a.id.startsWith(`${stage.id}.`));
+                  return (
+                    <Box flexDirection="row" key={indexStage} gap={2}>
+                      {stageJobs.map((job, indexJob) => {
+                        const jobId = `${indexStage + 1}.${indexJob + 1}`;
+                        const isActive = job.id === activeJob?.id;
+                        return (
+                          <Box flexDirection="row" key={indexJob}>
+                            <Text color={'gray'} inverse={isActive}>
+                              {jobId}{' '}
+                            </Text>
+                            <Text color={statusColor[job.status]} inverse={isActive}>
+                              {job.name}
+                            </Text>
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
+          {/* Print failed jobs to the console after exiting the interactive render process */}
+          {jobs
+            .filter((a) => a.status === 'error')
+            .toSorted((a, b) => a.id.localeCompare(b.id))
+            .map((job) => (
+              <Box key={job.id} flexDirection="column">
+                <Text dimColor>{'─'.repeat(columns)}</Text>
+                <Text color={statusColor[job.status]}>{createJobStateDisplayName(job)}</Text>
+                <Text dimColor>{'─'.repeat(columns)}</Text>
+                {job.logs.map(([type, message], i) =>
+                  type === 'command' ? (
+                    <Text key={`active-job-${i}`} color="gray">
+                      $ {message}
+                    </Text>
+                  ) : (
+                    <Text key={`active-job-${i}`} color={type === 'stderr' ? 'yellow' : 'white'}>
+                      {message.trimEnd()}
+                    </Text>
+                  ),
+                )}
+              </Box>
+            ))}
+        </>,
+        { columns: process.stdout.columns },
+      );
     // TODO Propagate error code to app for error code on manual quit
     switch (done) {
       case 'success':
       case 'warning':
-        setShowProgressBar(false);
         if (!interactive) {
-          exit(0);
+          exit({ exitCode: 0, additionalOutput } satisfies CommandReturnValue);
         }
         return;
       case 'error':
-        setShowProgressBar(false);
         if (!interactive) {
-          exit(1);
+          exit({ exitCode: 0, additionalOutput } satisfies CommandReturnValue);
         }
         return;
       default:
@@ -123,12 +238,14 @@ export function RunView({ config, configFile: _configFile, logger, interactive }
       </Box>
 
       {/* Divider and instructions */}
-      <Box flexDirection="column">
-        <Text dimColor>{'─'.repeat(columns)}</Text>
-        <Text dimColor>
-          ← → switch job {activeJob && '| ↑ ↓ scroll '}| q quit {interactive && '| r repeat '}
-        </Text>
-      </Box>
+      {showInstructions && (
+        <Box flexDirection="column">
+          <Text dimColor>{'─'.repeat(columns)}</Text>
+          <Text dimColor>
+            ← → switch job {activeJob && '| ↑ ↓ scroll | l copy logs '}| q quit {interactive && '| r repeat '}
+          </Text>
+        </Box>
+      )}
 
       {/* Current job's log area */}
       {activeJob && (
