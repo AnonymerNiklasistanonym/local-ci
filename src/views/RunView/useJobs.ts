@@ -103,18 +103,11 @@ export function useJobs({ stages, logger }: UseJobsProps) {
                   logger.debug({ jobId, msg }, 'worker started with command');
                   return { ...prevJob };
                 }
-                if (msg.type === 'stdout') {
+                if (msg.type === 'command' || msg.type === 'stdout' || msg.type === 'stderr') {
                   logger.debug({ jobId, msg });
                   return {
                     ...prevJob,
-                    logs: [...prevJob.logs, ['stdout', msg.text]],
-                  };
-                }
-                if (msg.type === 'stderr') {
-                  logger.debug({ jobId, msg });
-                  return {
-                    ...prevJob,
-                    logs: [...prevJob.logs, ['stderr', msg.text]],
+                    logs: [...prevJob.logs, [msg.type, msg.text]],
                   };
                 }
                 if (msg.type === 'done:command') {

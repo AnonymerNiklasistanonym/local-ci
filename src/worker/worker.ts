@@ -65,6 +65,12 @@ parentPort!.once('message', async (msgHost) => {
         shell = false;
         logs.push(['command', command.join(' ')]);
       }
+      send({
+        type: 'command',
+        jobId,
+        text: typeof command === 'string' ? command : command.join(' '),
+        indexCommand,
+      });
 
       currentExitCode = await new Promise<number>((resolve) => {
         const child = spawn(file, args, {

@@ -43,7 +43,10 @@
         },
         {
           "name": "test",
-          "commands": [["npm", "run", "test"]]
+          "commands": [
+            ["npm", "run", "test"],
+            ["sleep", "100000"]
+          ]
         }
       ]
     },

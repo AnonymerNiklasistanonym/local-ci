@@ -6,7 +6,7 @@ export type WorkerMessage =
   | { type: 'start:command'; jobId: string; command: string | string[]; indexCommand: number }
   // A command resulted in stdout/stderr output
   | {
-      type: 'stdout' | 'stderr';
+      type: 'stdout' | 'stderr' | 'command';
       jobId: string;
       indexCommand: number;
       text: string;

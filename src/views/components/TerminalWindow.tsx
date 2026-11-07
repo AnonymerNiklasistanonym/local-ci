@@ -13,14 +13,20 @@ const Divider = ({ width, color = 'gray' }: DividerProps) => {
 };
 
 interface TerminalWindowProps {
+  /** The title being displayed on the top left */
   title: string;
+  /** The subtitle being displayed on the top right */
   subtitle?: string;
+  /** The color of the window */
   color?: string;
+  /** The height of the terminal in the command line (depending on other content shown and the current rows) */
+  height: number;
+  /** The text (for example logs) to be rendered inside the window */
   children: ReactNode;
 }
 
-export const TerminalWindow = ({ title, subtitle, color = 'green', children }: TerminalWindowProps) => {
-  const { columns, rows } = useWindowSize();
+export const TerminalWindow = ({ title, subtitle, color = 'green', height, children }: TerminalWindowProps) => {
+  const { columns } = useWindowSize();
 
   return (
     <Box flexDirection="column" borderStyle="round" borderColor={color} width={columns - 2} paddingX={1}>
@@ -39,7 +45,7 @@ export const TerminalWindow = ({ title, subtitle, color = 'green', children }: T
       <Divider width={columns - 6} color="gray" />
       {/* Content */}
       <Box flexDirection="column">
-        <Scrollable height={Math.round(rows - 13)} followTail>
+        <Scrollable height={height - 4} followTail>
           {children}
         </Scrollable>
       </Box>

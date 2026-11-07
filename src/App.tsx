@@ -5,9 +5,9 @@ import { readConfigFile } from './config/readConfigFile.js';
 import { ErrorView } from './views/Error.js';
 import pkg from '../package.json' with { type: 'json' };
 import type { Config } from './config/config.js';
-import { InfoView } from './views/Info.js';
+import { InfoView } from './views/InfoView/InfoView.js';
 import { Spinner } from '@inkjs/ui';
-import { RunView } from './views/Run.js';
+import { RunView } from './views/RunView/RunView.js';
 import type { Logger } from 'pino';
 
 export interface AppProps extends CommandOptions {
