@@ -32,7 +32,7 @@ export function App({ mode, config: configFile = `.${pkg.name}.json`, logger, ..
   useInput((input) => {
     // Press q to exit
     if (input === 'q') {
-      logger.debug('User pressed q to close the program');
+      logger.debug(`User pressed ${input} to close the program`);
       // Close with error in case this is part of a git hook
       exit({ exitCode: 1 } satisfies CommandReturnValue);
     }

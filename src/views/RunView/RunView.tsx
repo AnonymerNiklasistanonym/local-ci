@@ -70,11 +70,13 @@ export function RunView({ config, configFile: _configFile, logger, interactive, 
     }
     // Press r to restart
     if (input === 'r') {
+      logger.debug(`User pressed ${input} to restart the pipeline`);
       reset();
     }
     // Press l to copy the current logs
     if (input.toLowerCase() === 'l' && activeJob) {
-      copyLogs(activeJob, !key.shift);
+      logger.debug(`User pressed ${input} to copy logs`);
+      copyLogs(activeJob, input === 'l');
     }
   });
 
