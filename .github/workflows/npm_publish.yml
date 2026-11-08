@@ -26,6 +26,8 @@ jobs:
       - run: npm ci
       - run: npm run test:check
       - run: npm run build
+      - name: Modify README links
+        run: sed -i -E "s#(src=\"|]\()\./#\1https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_REF_NAME}/#g" README.md
       - run: |
           if [[ "${{ github.ref_name }}" == *b* ]]; then
             npm publish --access public --tag beta

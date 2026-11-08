@@ -10,6 +10,10 @@
   "bin": {
     "local-ci": "dist/cli.mjs"
   },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
   "type": "module",
   "main": "dist/cli.mjs",
   "scripts": {
