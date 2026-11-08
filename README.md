@@ -113,6 +113,57 @@ Example:
 }
 ```
 
+## Try it out
+
+If `node` is installed and `npx` is available you can just run the following commands to try it out:
+
+```sh
+npx @anonymerniklasistanonym/local-ci --version
+# Need to install the following packages:
+# @anonymerniklasistanonym/local-ci@0.1.0-b
+# Ok to proceed? (y) y
+# npm notice run npx
+# npm notice run 'local-ci' --version
+# 0.1.0b
+```
+
+Create an example file `.local-ci.json`:
+
+```json
+{
+  "name": "Example",
+  "stages": [
+    {
+      "name": "hello world",
+      "jobs": [
+        {
+          "commands": [["echo", "hello world"]]
+        },
+        {
+          "commands": [["sleep", "10"]]
+        }
+      ]
+    }
+  ]
+}
+```
+
+And then run it:
+
+```sh
+npx @anonymerniklasistanonym/local-ci --interactive
+```
+
+To remove the package from the `npx` cache simply:
+
+```sh
+npm cache npx ls
+# b27ccf027b339910: @anonymerniklasistanonym/local-ci
+npm cache npx rm b27ccf027b339910
+# Or forefully remove all cached entries
+npm cache npx rm --force
+```
+
 ## Build
 
 The following command generates the files:

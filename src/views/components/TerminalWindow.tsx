@@ -42,7 +42,7 @@ export const TerminalWindow = ({
   const { columns } = useWindowSize();
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={color} width={columns - 2} paddingX={1}>
+    <Box flexDirection="column" borderStyle="round" borderColor={color} width={columns} paddingX={1}>
       {/* Title bar */}
       <Box justifyContent="space-between">
         <Box flexDirection="row" columnGap={1}>

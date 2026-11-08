@@ -2,11 +2,11 @@
   "name": "@anonymerniklasistanonym/local-ci",
   "version": "0.1.1b",
   "private": false,
+  "description": "run your own local ci for example as part of a git hook",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AnonymerNiklasistanonym/local-ci.git"
   },
-  "description": "run your own local ci for example as part of a git hook",
   "bin": {
     "local-ci": "dist/cli.mjs"
   },

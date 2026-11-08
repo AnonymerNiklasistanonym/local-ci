@@ -8,6 +8,7 @@ import { PRODUCTION } from '../env.js';
 import { withFullScreen } from 'fullscreen-ink';
 import { FilterInfo } from '../views/components/FilterInfo.js';
 import { sep } from 'path';
+import { name } from '../constants/info.js';
 
 export type Mode = 'info' | 'run';
 
@@ -44,17 +45,17 @@ export const command = new Command()
   .option('-v, --verbose', 'show extra info', false)
   .option('-i, --interactive', 'do not close the program if its done to inspect logs', false)
   .option('-f, --fullscreen', 'render in fullscreen (clears screen on exit)', false)
-  .option('--config <path>', 'path to your local-ci config', `.${pkg.name}.json`)
+  .option('--config <path>', 'path to your local-ci config', `.${name}.json`)
   .option('--only <stages/labels...>', 'only run specific stages (test) or labels (:test) [allowlist]')
   .option('--skip <stages/labels...>', 'exclude specific stages (build) or labels (:test) [blocklist]')
   .option('--also <stages/labels...>', 'also run specific stages (build) or labels (:fix)')
   .action(async (mode: Mode, options: CommandOptions) => {
     let logger: Logger | undefined = undefined;
     try {
-      logger = createLogger(options.verbose ? `${pkg.name}.log` : undefined, options.verbose ? 'debug' : 'silent');
+      logger = createLogger(options.verbose ? `${name}.log` : undefined, options.verbose ? 'debug' : 'silent');
       if (options.verbose) {
         console.log(`${pkg.name} v${pkg.version}${PRODUCTION ? '' : ' [dev build]'}`);
-        console.log(`Create logs in ${`.${sep}${pkg.name}.log`}`);
+        console.log(`Create logs in ${`.${sep}${name}.log`}`);
       }
 
       if (

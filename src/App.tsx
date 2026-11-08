@@ -11,6 +11,7 @@ import { RunView } from './views/RunView/RunView.js';
 import type { Logger } from 'pino';
 import { updateConfigFile } from './config/updateConfig.js';
 import { ManualExit } from './views/components/ManualExit.js';
+import { name } from './constants/info.js';
 
 export interface AppProps extends CommandOptions {
   mode: Mode;
@@ -24,7 +25,7 @@ export interface GenericViewProps {
   logger: Logger;
 }
 
-export function App({ mode, config: configFile = `.${pkg.name}.json`, logger, only, also, skip, ...other }: AppProps) {
+export function App({ mode, config: configFile = `.${name}.json`, logger, only, also, skip, ...other }: AppProps) {
   const { exit } = useApp();
   const [error, setError] = useState<Error | undefined>();
   const [config, setConfig] = useState<InternalConfig>();

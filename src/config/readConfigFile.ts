@@ -20,7 +20,7 @@ export const readConfigFile = async (path: string): Promise<Config> => {
     const raw = await readFile(path, 'utf-8');
     //const data = JSON.parse(raw);
     const errors: ParseError[] = [];
-    const data = parse(raw, errors);
+    const data = parse(raw, errors, { allowTrailingComma: true });
     if (errors.length > 0) {
       const errorsExtended: ParseErrorExtended[] = [];
       visit(raw, {

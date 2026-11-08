@@ -6,7 +6,7 @@ import type { JobState, StageState } from '../../worker/states.js';
 import type { WorkerMessage } from '../../worker/messages.js';
 import type { Logger } from 'pino';
 import { join } from 'path';
-import pkg from '../../../package.json' with { type: 'json' };
+import { name } from '../../constants/info.js';
 
 interface UseJobsProps {
   stages: InternalStage[];
@@ -30,7 +30,7 @@ export function useJobs({ stages, logger }: UseJobsProps) {
     // Create a wrapper function around starting a worker that can be awaited
     const createWorkerJobWrapper = (job: InternalJob, onMessage: (msg: WorkerMessage) => void) =>
       new Promise<{ code?: number; job: InternalJob }>((resolve, reject) => {
-        const logFile = join(process.cwd(), `${pkg.name}-worker-${job.id}.log`);
+        const logFile = join(process.cwd(), `${name}-worker-${job.id}.log`);
         const worker = createWorker(
           { commands: job.commands, jobId: job.id, logFile: logger.level === 'debug' ? logFile : undefined },
           onMessage,
