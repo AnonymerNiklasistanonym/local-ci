@@ -187,7 +187,7 @@ node .
 node dist/cli.mjs
 ```
 
-# Permissions
+### Permissions
 
 Sadly the permission system in `node` is quite weird in 2 ways:
 

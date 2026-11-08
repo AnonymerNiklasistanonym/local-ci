@@ -21,6 +21,9 @@ npm pack
 npm pack --dry-run
 ```
 
+> [!NOTE]
+> `npm` uses the `files` entry in `package.json` as an allow list so you do not add more than `dist` and `README.md` to the package (next to the defaults `LICENSE`, `README` and `package.json`).
+
 Install the package in a new repository:
 
 ```sh
@@ -85,6 +88,11 @@ In the last step you are prompted to authenticate yourself by logging yourself i
 
 > [!NOTE]
 > If your name is too generic, similar to existing projects or for other reasons you might be prompted to modify the name in `package.json` and prefix it with your username.
+
+### `npm` `README`
+
+The `npm` `README` does not show images or do relative file links.
+So be sure to for example replace those paths with GitHub raw links.
 
 ### GitHub Actions integration
 
