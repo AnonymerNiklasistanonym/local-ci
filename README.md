@@ -34,8 +34,11 @@ Options:
   -V, --version              output the version number
   -v, --verbose              show extra info (default: false)
   -i, --interactive          do not close the program if its done to inspect logs (default: false)
+  -f, --fullscreen           render in fullscreen (clears screen on exit) (default: false)
   --config <path>            path to your local-ci config (default: ".local-ci.json")
-  --only <stages/labels...>  only run specific stages (build lint) or labels (:fix)
+  --only <stages/labels...>  only run specific stages (test) or labels (:test) [allowlist]
+  --skip <stages/labels...>  exclude specific stages (build) or labels (:test) [blocklist]
+  --also <stages/labels...>  also run specific stages (build) or labels (:fix)
   -h, --help                 display help for command
 ```
 

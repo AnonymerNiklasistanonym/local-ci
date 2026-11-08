@@ -1,4 +1,5 @@
 import { bunPluginPino } from 'bun-plugin-pino';
+import pkg from './package.json' with { type: 'json' };
 
 // Create a binary
 
@@ -23,12 +24,33 @@ const ignoreReactDevToolsPlugin = {
   },
 };
 
-await Bun.build({
-  entrypoints: ['./src/cli.tsx', './src/worker/worker.ts'],
-  compile: { outfile: './local-ci' },
-  define: {
-    __WORKER_PATH__: './worker.js',
-  },
-  target: 'bun', // allow Node.js built-in modules
-  plugins: [bunPluginPino({}), ignoreReactDevToolsPlugin],
-});
+for (const config of [
+  {
+    outdir: `./dist_bun_${pkg.name}_v${pkg.version}`,
+  } as const,
+  {
+    compile: { target: 'bun-linux-x64', outfile: `./dist_bun/${pkg.name}-v${pkg.version}-linux-x64` },
+  } as const,
+  {
+    compile: { target: 'bun-windows-x64', outfile: `./dist_bun/${pkg.name}-v${pkg.version}-win-x64.exe` },
+  } as const,
+  {
+    outdir: `./dist_bun_${pkg.name}_v${pkg.version}`,
+  } as const,
+])
+  await Bun.build({
+    entrypoints: ['./src/cli.tsx', './src/worker/worker.ts'],
+    root: './src',
+    define: {
+      'process.env.NODE_ENV': '"production"',
+      __WORKER_PATH__: './worker/worker.js',
+    },
+    target: 'bun', // allow Node.js built-in modules
+    plugins: [
+      bunPluginPino({
+        transports: ['pino-pretty', 'pino/file'],
+      }),
+      ignoreReactDevToolsPlugin,
+    ],
+    ...config,
+  });
