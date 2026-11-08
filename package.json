@@ -1,6 +1,6 @@
 {
   "name": "local-ci",
-  "version": "0.1.0",
+  "version": "0.1.0b",
   "private": true,
   "description": "run your own local ci for example as part of a git hook",
   "bin": {
