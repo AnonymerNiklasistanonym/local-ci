@@ -1,4 +1,8 @@
 import pkg from '../../package.json' with { type: 'json' };
 
-const lastIndexSlash = pkg.name.lastIndexOf('/');
-export const name = lastIndexSlash === -1 ? pkg.name : pkg.name.substring(lastIndexSlash + 1);
+export function extractName(fullName: string) {
+  const i = fullName.lastIndexOf('/');
+  return i === -1 ? fullName : fullName.substring(i + 1);
+}
+
+export const name = extractName(pkg.name);
