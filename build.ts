@@ -1,9 +1,11 @@
+import type { PluginBuild } from 'esbuild';
 import { bunPluginPino } from 'bun-plugin-pino';
+import { name } from './src/constants/info.js';
 import pkg from './package.json' with { type: 'json' };
 
 // Create a binary
 
-// CURRENTLY BROKEN
+// CURRENTLY BROKEN IN SOME PARTS
 // error: Cannot find module '/$bunfs/root/thread-stream-worker.js'
 
 // bun install
@@ -12,9 +14,9 @@ import pkg from './package.json' with { type: 'json' };
 
 const ignoreReactDevToolsPlugin = {
   name: 'ignore-react-devtools',
-  setup(build: any) {
+  setup(build: PluginBuild) {
     // Intercept import of react-devtools-core and point it to an empty namespace
-    build.onResolve({ filter: /^react-devtools-core$/ }, (args: any) => {
+    build.onResolve({ filter: /^react-devtools-core$/ }, (args) => {
       return { namespace: 'ignore-devtools', path: args.path };
     });
     // Return empty content for modules in that namespace
@@ -26,16 +28,16 @@ const ignoreReactDevToolsPlugin = {
 
 for (const config of [
   {
-    outdir: `./dist_bun_${pkg.name}_v${pkg.version}`,
+    outdir: `./dist_bun_${name}_v${pkg.version}`,
   } as const,
   {
-    compile: { outfile: `./dist_bun/${pkg.name}-v${pkg.version}-linux-x64`, target: 'bun-linux-x64' },
+    compile: { outfile: `./dist_bun/${name}-v${pkg.version}-linux-x64`, target: 'bun-linux-x64' },
   } as const,
   {
-    compile: { outfile: `./dist_bun/${pkg.name}-v${pkg.version}-win-x64.exe`, target: 'bun-windows-x64' },
+    compile: { outfile: `./dist_bun/${name}-v${pkg.version}-win-x64.exe`, target: 'bun-windows-x64' },
   } as const,
   {
-    outdir: `./dist_bun_${pkg.name}_v${pkg.version}`,
+    outdir: `./dist_bun_${name}_v${pkg.version}`,
   } as const,
 ])
   await Bun.build({
