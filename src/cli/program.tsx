@@ -1,19 +1,28 @@
 import { Argument, Command } from 'commander';
 import pkg from '../../package.json' with { type: 'json' };
-import { render } from 'ink';
+import { render, renderToString } from 'ink';
 import { App } from '../App.js';
 import { createLogger } from '../logger.js';
 import type { Logger } from 'pino';
 import { PRODUCTION } from '../env.js';
 import { withFullScreen } from 'fullscreen-ink';
+import { FilterInfo } from '../views/components/FilterInfo.js';
 
 export type Mode = 'info' | 'run';
 
-export interface CommandOptions {
+export interface CommandOptionsFilter {
+  /** Allowlist (like specifying that only a select stage with the name 'test' should be run) */
+  only?: string[];
+  /** Blocklist (like specifying that the stage 'build' should not be run) */
+  skip?: string[];
+  /** Extend allowlist (like also running jobs with the label 'fix') */
+  also?: string[];
+}
+
+export interface CommandOptions extends CommandOptionsFilter {
   config: string;
   interactive: boolean;
   verbose: boolean;
-  only?: string[];
   fullscreen: boolean;
 }
 
@@ -35,7 +44,9 @@ export const command = new Command()
   .option('-i, --interactive', 'do not close the program if its done to inspect logs', false)
   .option('-f, --fullscreen', 'render in fullscreen (clears screen on exit)', false)
   .option('--config <path>', 'path to your local-ci config', `.${pkg.name}.json`)
-  .option('--only <stages/labels...>', 'only run specific stages (build lint) or labels (:fix)')
+  .option('--only <stages/labels...>', 'only run specific stages (test) or labels (:test) [allowlist]')
+  .option('--skip <stages/labels...>', 'exclude specific stages (build) or labels (:test) [blocklist]')
+  .option('--also <stages/labels...>', 'also run specific stages (build) or labels (:fix)')
   .action(async (mode: Mode, options: CommandOptions) => {
     let logger: Logger | undefined = undefined;
     try {
@@ -44,6 +55,17 @@ export const command = new Command()
         console.log(`${pkg.name} v${pkg.version}${PRODUCTION ? '' : ' [dev build]'}`);
 
         logger.info(`Create logs in ${`${pkg.name}.log`}`);
+      }
+
+      if (
+        (options.also && options.also.length > 0) ||
+        (options.skip && options.skip.length > 0) ||
+        (options.only && options.only.length > 0)
+      ) {
+        const filterInfo = renderToString(<FilterInfo {...options} />, {
+          columns: process.stdout.columns,
+        });
+        console.log(filterInfo);
       }
 
       let result: CommandReturnValue;

@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Text, useInput, useApp } from 'ink';
+import { useEffect, useState } from 'react';
+import { Box, Text, useInput, useApp, renderToString } from 'ink';
 import type { CommandOptions, CommandReturnValue, Mode } from './cli/program.js';
 import { readConfigFile } from './config/readConfigFile.js';
 import { ErrorView } from './views/Error.js';
 import pkg from '../package.json' with { type: 'json' };
-import type { Config } from './config/config.js';
+import type { InternalConfig } from './config/config.js';
 import { InfoView } from './views/InfoView/InfoView.js';
 import { Spinner } from '@inkjs/ui';
 import { RunView } from './views/RunView/RunView.js';
 import type { Logger } from 'pino';
+import { updateConfigFile } from './config/updateConfig.js';
+import { ManualExit } from './views/components/ManualExit.js';
 
 export interface AppProps extends CommandOptions {
   mode: Mode;
@@ -16,25 +18,29 @@ export interface AppProps extends CommandOptions {
 }
 
 export interface GenericViewProps {
-  config: Config;
-  configFile: string;
+  config: InternalConfig;
   interactive: boolean;
   fullscreen: boolean;
   logger: Logger;
 }
 
-export function App({ mode, config: configFile = `.${pkg.name}.json`, logger, ...other }: AppProps) {
+export function App({ mode, config: configFile = `.${pkg.name}.json`, logger, only, also, skip, ...other }: AppProps) {
   const { exit } = useApp();
   const [error, setError] = useState<Error | undefined>();
-  const [config, setConfig] = useState<Config>();
+  const [config, setConfig] = useState<InternalConfig>();
 
   // This hook keeps the process alive and waits for keystrokes
   useInput((input) => {
     // Press q to exit
     if (input === 'q') {
       logger.debug(`User pressed ${input} to close the program`);
+      const exitCode = 1;
+      const additionalOutput = () =>
+        renderToString(<ManualExit message="Pipeline was manually quit" exitCode={exitCode} />, {
+          columns: process.stdout.columns,
+        });
       // Close with error in case this is part of a git hook
-      exit({ exitCode: 1 } satisfies CommandReturnValue);
+      exit({ exitCode: 1, additionalOutput } satisfies CommandReturnValue);
     }
   });
 
@@ -43,7 +49,13 @@ export function App({ mode, config: configFile = `.${pkg.name}.json`, logger, ..
     readConfigFile(configFile)
       .then((readConfig) => {
         logger.debug({ readConfig }, 'read config file: success');
-        setConfig(readConfig);
+        const internalConfig = updateConfigFile(readConfig, configFile, {
+          only,
+          skip,
+          also,
+        });
+        logger.debug({ internalConfig }, 'updated read config file for internal use');
+        setConfig(internalConfig);
       })
       .catch((err) => {
         logger.error(err, 'read config file: failure');
@@ -58,9 +70,9 @@ export function App({ mode, config: configFile = `.${pkg.name}.json`, logger, ..
   const content =
     config !== undefined ? (
       mode === 'info' ? (
-        <InfoView config={config} configFile={configFile} logger={logger} {...other} />
+        <InfoView config={config} logger={logger} {...other} />
       ) : (
-        <RunView config={config} configFile={configFile} logger={logger} {...other} />
+        <RunView config={config} logger={logger} {...other} />
       )
     ) : (
       <Box flexDirection="column" padding={1}>

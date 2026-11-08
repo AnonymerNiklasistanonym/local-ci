@@ -19,7 +19,7 @@ export const InfoStage = ({ indexStage, stage }: InfoStageProps) => {
         {stage.explicit ? <Badge color={'yellow'}>disabled by default</Badge> : ''}
         {stage.labels?.map((label, l) => (
           <Badge key={l} color={'magenta'}>
-            {label}
+            :{label}
           </Badge>
         ))}
       </Box>

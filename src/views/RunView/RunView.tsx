@@ -12,6 +12,7 @@ import clipboardy from 'clipboardy';
 import { stripVTControlCharacters } from 'node:util';
 import { RunPipelineStatus } from './RunPipelineStatus.js';
 import { RunJobDetails } from './RunJobDetails.js';
+import { ManualExit } from '../components/ManualExit.js';
 
 interface RunViewProps extends GenericViewProps {
   renderAsString?: boolean;
@@ -29,7 +30,7 @@ const copyLogs = (jobStage: JobState, stripAnsiSymbols: boolean = true) => {
   );
 };
 
-export function RunView({ config, configFile: _configFile, logger, interactive, fullscreen }: RunViewProps) {
+export function RunView({ config, logger, interactive, fullscreen }: RunViewProps) {
   const { columns } = useWindowSize();
   const { done, stages, jobs, reset } = useJobs({ stages: config.stages, logger });
   const { exit } = useApp();
@@ -47,6 +48,7 @@ export function RunView({ config, configFile: _configFile, logger, interactive, 
     activeJob && 'l copy logs',
     activeJob && 'q quit',
     interactive && 'r repeat',
+    !done && 's skip',
   ]
     .filter((a): a is string => Boolean(a))
     .join(' | ');
@@ -72,6 +74,16 @@ export function RunView({ config, configFile: _configFile, logger, interactive, 
     if (input === 'r') {
       logger.debug(`User pressed ${input} to restart the pipeline`);
       reset();
+    }
+    // Press s to skip
+    if (input === 's') {
+      logger.debug(`User pressed ${input} to skip the pipeline`);
+      const exitCode = 0;
+      const additionalOutput = () =>
+        renderToString(<ManualExit message="Pipeline was manually skipped" exitCode={exitCode} />, {
+          columns: process.stdout.columns,
+        });
+      exit({ exitCode, additionalOutput } satisfies CommandReturnValue);
     }
     // Press l to copy the current logs
     if (input.toLowerCase() === 'l' && activeJob) {

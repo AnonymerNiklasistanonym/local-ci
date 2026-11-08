@@ -1,5 +1,6 @@
 import { Type, type Static } from 'typebox';
 
+//#region Job
 export const JobT = Type.Object(
   {
     name: Type.Optional(Type.String({ description: 'The name of the job' })),
@@ -51,6 +52,20 @@ export const JobT = Type.Object(
 );
 export type Job = Static<typeof JobT>;
 
+export const InternalJobT = Type.Intersect([
+  JobT,
+  Type.Object({
+    id: Type.String({ description: 'Internal pipeline ID for this job' }),
+    stageId: Type.String({
+      description: 'Internal pipeline ID for this jobs stage',
+    }),
+  }),
+]);
+
+export type InternalJob = Static<typeof InternalJobT>;
+//#endregion
+
+//#region Stage
 export const StageT = Type.Object(
   {
     name: Type.Optional(Type.String({ description: 'The name of the stage' })),
@@ -81,6 +96,17 @@ export const StageT = Type.Object(
 );
 export type Stage = Static<typeof StageT>;
 
+export const InternalStageT = Type.Intersect([
+  StageT,
+  Type.Object({
+    id: Type.String({ description: 'Internal pipeline ID for this stage' }),
+  }),
+]);
+
+export type InternalStage = Static<typeof InternalStageT>;
+//#endregion
+
+//#region Config
 export const ConfigT = Type.Object(
   {
     $schema: Type.Optional(Type.String()),
@@ -94,3 +120,15 @@ export const ConfigT = Type.Object(
   },
 );
 export type Config = Static<typeof ConfigT>;
+
+export const InternalConfigT = Type.Intersect([
+  ConfigT,
+  Type.Object({
+    displayName: Type.String({ description: 'The name of the stage' }),
+    source: Type.String({ description: 'The source of this configuration' }),
+    stages: Type.Array(InternalStageT),
+  }),
+]);
+
+export type InternalConfig = Static<typeof InternalConfigT>;
+//#endregion

@@ -18,6 +18,7 @@
         {
           "name": "format",
           "commands": [["npm", "run", "format:check"]],
+          "labels": ["check"],
           "cwd": "."
         },
         {
@@ -29,7 +30,8 @@
         },
         {
           "name": "lint",
-          "commands": [["npm", "run", "lint:check"]]
+          "commands": [["npm", "run", "lint:check"]],
+          "labels": ["check"]
         },
         {
           "name": "lint:fix",
