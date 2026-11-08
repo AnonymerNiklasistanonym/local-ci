@@ -42,11 +42,15 @@ jobs:
       - run: npm run build
       - run: npm run create:schema
         continue-on-error: true
+      - uses: oven-sh/setup-bun@v2
+      - run: ./build_binary.sh
+        continue-on-error: true
       # Upload bundled files and created schema in dist for deploy job (TODO)
       - name: Upload dist
         uses: actions/upload-artifact@v7
         with:
           path: |
+            dist_bun/
             dist/
             *.schema.json
 
