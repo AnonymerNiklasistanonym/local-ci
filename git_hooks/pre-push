@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# -> .git/hooks/pre-push
+
+# Terminate if any command is non 0
+set -e
+
+# Is file descriptor 1 (stdout) is connected to this terminal (TTY)
+# Non GUI applications usually pipe stdout/stderr so it should be false and then skip this (e.g. VSCode git GUI)
+if [ -t 1 ]; then
+    # Save original stdin to fd 6
+    exec 6<&0
+    # Shell redirection
+    # Replace the shell process's standard input (stdin) with the terminal device file
+    # Any program launched afterward inherits a real terminal as stdin instead of whatever stdin the hook originally received (a pipe, /dev/null, or a closed fd)
+    if exec < /dev/tty; then
+        npm run dev -- -f
+    fi
+    # Restore original stdin from fd 6 and close it
+    exec 0<&6 6<&-
+fi

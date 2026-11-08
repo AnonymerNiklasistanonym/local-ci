@@ -6,8 +6,8 @@ export const humanTime = (rawMs: number) => {
   const d = Math.floor(h / 24);
 
   if (d) return `${d}d ${h % 24}h`;
-  if (h) return `${h}h ${m % 60}m`;
-  if (m) return `${m}m ${s % 60}s`;
+  if (h) return `${h}h ${m % 60}min`;
+  if (m) return `${m}min ${s % 60}s`;
   if (s) return `${s}s`;
   return `${ms}ms`;
 };
