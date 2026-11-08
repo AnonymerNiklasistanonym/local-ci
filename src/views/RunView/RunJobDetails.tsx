@@ -1,10 +1,10 @@
 import { Box, Text, useWindowSize } from 'ink';
-import { statusColor, statusIcon } from '../constants/status.js';
-import type { JobState } from '../../worker/states.js';
 import { createJobStateDisplayName, createJobStateInfo } from '../helper/state.js';
-import { TerminalWindow } from '../components/TerminalWindow.js';
+import { statusColor, statusIcon } from '../constants/status.js';
 import { ElapsedTime } from '../components/ElapsedTime.js';
+import type { JobState } from '../../worker/states.js';
 import { RunJobLog } from './RunJobLog.js';
+import { TerminalWindow } from '../components/TerminalWindow.js';
 
 interface RunJobDetailsProps {
   /** The current height of the view in order to maximize the terminal scroll window inside it */

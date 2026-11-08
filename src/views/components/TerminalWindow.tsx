@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react';
 import { Box, Text, useWindowSize } from 'ink';
+import { type ReactNode } from 'react';
 import { Scrollable } from '@oliveryasuna/ink-frame-scroll';
 import { Spinner } from '@inkjs/ui';
 

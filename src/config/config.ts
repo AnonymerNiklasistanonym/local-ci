@@ -1,9 +1,13 @@
-import { Type, type Static } from 'typebox';
+import { type Static, Type } from 'typebox';
 
 //#region Job
 export const JobT = Type.Object(
   {
-    name: Type.Optional(Type.String({ description: 'The name of the job' })),
+    allowedToFail: Type.Optional(
+      Type.Boolean({
+        description: 'On failure continue do not stop and continue with the next stage',
+      }),
+    ),
     commands: Type.Array(
       Type.Union([
         Type.Array(
@@ -21,11 +25,6 @@ export const JobT = Type.Object(
         description: 'Directory in which the commands should be run',
       }),
     ),
-    mandatory: Type.Optional(
-      Type.Boolean({
-        description: 'Always run this job, even when filter is applied',
-      }),
-    ),
     explicit: Type.Optional(
       Type.Boolean({
         description: 'Only run this job if explicitly requested',
@@ -38,16 +37,17 @@ export const JobT = Type.Object(
         }),
       ),
     ),
-    allowedToFail: Type.Optional(
+    mandatory: Type.Optional(
       Type.Boolean({
-        description: 'On failure continue do not stop and continue with the next stage',
+        description: 'Always run this job, even when filter is applied',
       }),
     ),
+    name: Type.Optional(Type.String({ description: 'The name of the job' })),
   },
   {
-    title: 'Job',
-    description: 'A job runs a sequence of commands',
     additionalProperties: false,
+    description: 'A job runs a sequence of commands',
+    title: 'Job',
   },
 );
 export type Job = Static<typeof JobT>;
@@ -68,17 +68,12 @@ export type InternalJob = Static<typeof InternalJobT>;
 //#region Stage
 export const StageT = Type.Object(
   {
-    name: Type.Optional(Type.String({ description: 'The name of the stage' })),
-    mandatory: Type.Optional(
-      Type.Boolean({
-        description: 'Always run this stage, even when filter is applied',
-      }),
-    ),
     explicit: Type.Optional(
       Type.Boolean({
         description: 'Only run this stage if explicitly requested',
       }),
     ),
+    jobs: Type.Array(JobT),
     labels: Type.Optional(
       Type.Array(
         Type.String({
@@ -86,12 +81,17 @@ export const StageT = Type.Object(
         }),
       ),
     ),
-    jobs: Type.Array(JobT),
+    mandatory: Type.Optional(
+      Type.Boolean({
+        description: 'Always run this stage, even when filter is applied',
+      }),
+    ),
+    name: Type.Optional(Type.String({ description: 'The name of the stage' })),
   },
   {
-    title: 'Stage',
-    description: 'A stage runs jobs in parallel',
     additionalProperties: false,
+    description: 'A stage runs jobs in parallel',
+    title: 'Stage',
   },
 );
 export type Stage = Static<typeof StageT>;
@@ -115,9 +115,9 @@ export const ConfigT = Type.Object(
     stages: Type.Array(StageT),
   },
   {
-    title: 'Config',
-    description: 'A config contains all information to run a local CI, meaning a list of stages',
     additionalProperties: false,
+    description: 'A config contains all information to run a local CI, meaning a list of stages',
+    title: 'Config',
   },
 );
 export type Config = Static<typeof ConfigT>;

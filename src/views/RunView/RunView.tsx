@@ -1,20 +1,20 @@
-import { Box, renderToString, Text, useApp, useInput, useWindowSize } from 'ink';
-import { useEffect, useState } from 'react';
-import { useJobs } from './useJobs.js';
+import { Box, Text, renderToString, useApp, useInput, useWindowSize } from 'ink';
 import { ProgressBar, ThemeProvider } from '@inkjs/ui';
-import { statusColor } from '../constants/status.js';
-import { progressBarTheme } from '../constants/themes.js';
 import { createJobStateDisplayName, createJobStateInfo } from '../helper/state.js';
+import { useEffect, useState } from 'react';
 import type { CommandReturnValue } from '../../cli/program.js';
 import type { GenericViewProps } from '../../App.js';
 import type { JobState } from '../../worker/states.js';
-import clipboardy from 'clipboardy';
-import { stripVTControlCharacters } from 'node:util';
-import { RunPipelineStatus } from './RunPipelineStatus.js';
-import { RunJobDetails } from './RunJobDetails.js';
 import { ManualExit } from '../components/ManualExit.js';
-import { humanTime } from '../../utils/human.js';
+import { RunJobDetails } from './RunJobDetails.js';
 import { RunJobLog } from './RunJobLog.js';
+import { RunPipelineStatus } from './RunPipelineStatus.js';
+import clipboardy from 'clipboardy';
+import { humanTime } from '../../utils/human.js';
+import { progressBarTheme } from '../constants/themes.js';
+import { statusColor } from '../constants/status.js';
+import { stripVTControlCharacters } from 'node:util';
+import { useJobs } from './useJobs.js';
 
 interface RunViewProps extends GenericViewProps {
   renderAsString?: boolean;
@@ -43,7 +43,7 @@ const copyLogs = (jobStage: JobState, stripAnsiSymbols: boolean = true) => {
 
 export function RunView({ config, logger, interactive, fullscreen }: RunViewProps) {
   const { columns } = useWindowSize();
-  const { done, stages, jobs, reset } = useJobs({ stages: config.stages, logger });
+  const { done, stages, jobs, reset } = useJobs({ logger, stages: config.stages });
   const { exit } = useApp();
 
   const [activeJobTracker, setActiveJobTracker] = useState<{ id: string } | undefined>(undefined);
@@ -93,10 +93,10 @@ export function RunView({ config, logger, interactive, fullscreen }: RunViewProp
     switch (done) {
       case 'success':
       case 'warning':
-        exit({ exitCode: 0, additionalOutput } satisfies CommandReturnValue);
+        exit({ additionalOutput, exitCode: 0 } satisfies CommandReturnValue);
         return;
       case 'error':
-        exit({ exitCode: 1, additionalOutput } satisfies CommandReturnValue);
+        exit({ additionalOutput, exitCode: 1 } satisfies CommandReturnValue);
         return;
       default:
       // Do nothing
@@ -141,11 +141,11 @@ export function RunView({ config, logger, interactive, fullscreen }: RunViewProp
       logger.debug(`User pressed ${input} to skip the pipeline`);
       const exitCode = 0;
       exit({
-        exitCode,
         additionalOutput: () =>
           renderToString(<ManualExit message="Pipeline was manually skipped" exitCode={exitCode} />, {
             columns: process.stdout.columns,
           }),
+        exitCode,
       } satisfies CommandReturnValue);
     }
     // Press l to copy the current logs

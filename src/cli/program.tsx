@@ -1,14 +1,14 @@
 import { Argument, Command } from 'commander';
-import pkg from '../../package.json' with { type: 'json' };
 import { render, renderToString } from 'ink';
 import { App } from '../App.js';
-import { createLogger } from '../logger.js';
+import { FilterInfo } from '../views/components/FilterInfo.js';
 import type { Logger } from 'pino';
 import { PRODUCTION } from '../env.js';
-import { withFullScreen } from 'fullscreen-ink';
-import { FilterInfo } from '../views/components/FilterInfo.js';
-import { sep } from 'path';
+import { createLogger } from '../logger.js';
 import { name } from '../constants/info.js';
+import pkg from '../../package.json' with { type: 'json' };
+import { sep } from 'path';
+import { withFullScreen } from 'fullscreen-ink';
 
 export type Mode = 'info' | 'run';
 

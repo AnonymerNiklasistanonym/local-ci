@@ -1,5 +1,5 @@
-import { Badge } from '@inkjs/ui';
 import { Box, Text, useWindowSize } from 'ink';
+import { Badge } from '@inkjs/ui';
 import { colors } from '../constants/themes.js';
 
 interface ManualExitProps {

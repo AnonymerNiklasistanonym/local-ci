@@ -1,6 +1,6 @@
 import { Text } from 'ink';
-import { humanTime } from '../../utils/human.js';
 import type { WorkerLog } from '../../worker/messages.js';
+import { humanTime } from '../../utils/human.js';
 
 interface RunJobLogProps {
   log: WorkerLog;

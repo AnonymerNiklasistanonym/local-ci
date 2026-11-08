@@ -1,8 +1,8 @@
+import type { Logger } from 'pino';
 import { Worker } from 'worker_threads';
 import type { WorkerData } from './data.js';
 import type { WorkerMessage } from './messages.js';
 import { join } from 'path';
-import type { Logger } from 'pino';
 
 /** The worker path may be different when bundled */
 const workerPath = typeof __WORKER_PATH__ !== 'undefined' ? __WORKER_PATH__ : join(import.meta.dirname, 'worker.js');
@@ -18,8 +18,8 @@ export const createWorker = (
   logger: Logger,
 ): Worker => {
   const worker = new Worker(new URL(workerPath, import.meta.url), {
-    workerData,
     name: workerData.jobId,
+    workerData,
   });
   // Log all channels
   worker.on('message', (msg: WorkerMessage) => {

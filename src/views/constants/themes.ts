@@ -15,8 +15,8 @@ export const progressBarTheme = extendTheme(defaultTheme, {
 
 export const colors = {
   exitCode: {
-    zero: 'green',
     nonZero: 'red',
+    zero: 'green',
   },
   filter: {
     also: 'blue',

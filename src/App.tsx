@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
-import { Box, Text, useInput, useApp, renderToString } from 'ink';
+import { Box, Text, renderToString, useApp, useInput } from 'ink';
 import type { CommandOptions, CommandReturnValue, Mode } from './cli/program.js';
-import { readConfigFile } from './config/readConfigFile.js';
+import { useEffect, useState } from 'react';
 import { ErrorView } from './views/Error.js';
-import pkg from '../package.json' with { type: 'json' };
-import type { InternalConfig } from './config/config.js';
 import { InfoView } from './views/InfoView/InfoView.js';
-import { Spinner } from '@inkjs/ui';
-import { RunView } from './views/RunView/RunView.js';
+import type { InternalConfig } from './config/config.js';
 import type { Logger } from 'pino';
-import { updateConfigFile } from './config/updateConfig.js';
 import { ManualExit } from './views/components/ManualExit.js';
+import { RunView } from './views/RunView/RunView.js';
+import { Spinner } from '@inkjs/ui';
 import { name } from './constants/info.js';
+import pkg from '../package.json' with { type: 'json' };
+import { readConfigFile } from './config/readConfigFile.js';
+import { updateConfigFile } from './config/updateConfig.js';
 
 export interface AppProps extends CommandOptions {
   mode: Mode;
@@ -41,7 +41,7 @@ export function App({ mode, config: configFile = `.${name}.json`, logger, only, 
           columns: process.stdout.columns,
         });
       // Close with error in case this is part of a git hook
-      exit({ exitCode: 1, additionalOutput } satisfies CommandReturnValue);
+      exit({ additionalOutput, exitCode: 1 } satisfies CommandReturnValue);
     }
   });
 
@@ -51,9 +51,9 @@ export function App({ mode, config: configFile = `.${name}.json`, logger, only, 
       .then((readConfig) => {
         logger.debug({ readConfig }, 'read config file: success');
         const internalConfig = updateConfigFile(readConfig, configFile, {
+          also,
           only,
           skip,
-          also,
         });
         logger.debug({ internalConfig }, 'updated read config file for internal use');
         setConfig(internalConfig);

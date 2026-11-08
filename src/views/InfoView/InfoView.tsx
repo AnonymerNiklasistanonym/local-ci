@@ -1,9 +1,9 @@
-import { Box, renderToString, Text, useApp } from 'ink';
-import { InfoStage } from './InfoStage.js';
+import { Box, Text, renderToString, useApp } from 'ink';
 import { Badge } from '@inkjs/ui';
-import { useEffect } from 'react';
 import type { CommandReturnValue } from '../../cli/program.js';
 import type { GenericViewProps } from '../../App.js';
+import { InfoStage } from './InfoStage.js';
+import { useEffect } from 'react';
 
 interface InfoViewProps extends GenericViewProps {
   renderAsString?: boolean;
@@ -17,7 +17,7 @@ export function InfoView({ config, logger, renderAsString, ...other }: InfoViewP
       renderToString(<InfoView config={config} logger={logger} {...other} interactive={false} renderAsString />, {
         columns: process.stdout.columns,
       });
-    exit({ exitCode: 0, additionalOutput } satisfies CommandReturnValue);
+    exit({ additionalOutput, exitCode: 0 } satisfies CommandReturnValue);
   }, [exit]);
 
   if (!renderAsString) {

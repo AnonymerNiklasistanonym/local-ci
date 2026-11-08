@@ -1,7 +1,7 @@
-import { useEffect, useMemo } from 'react';
 import { Box, Text, useApp } from 'ink';
-import { ConfigError } from '../config/configError.js';
+import { useEffect, useMemo } from 'react';
 import type { CommandReturnValue } from '../cli/program.js';
+import { ConfigError } from '../config/configError.js';
 
 interface ErrorViewProps {
   error?: Error | ConfigError;

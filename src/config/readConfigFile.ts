@@ -1,8 +1,8 @@
-import { readFile } from 'fs/promises';
-import { ConfigT, type Config } from './config.js';
+import { type Config, ConfigT } from './config.js';
+import { type ParseError, type ParseErrorCode, parse, printParseErrorCode, visit } from 'jsonc-parser';
 import Compile from 'typebox/compile';
 import { ConfigError } from './configError.js';
-import { parse, printParseErrorCode, visit, type ParseErrorCode, type ParseError } from 'jsonc-parser';
+import { readFile } from 'fs/promises';
 
 export interface ParseErrorExtended {
   errorCode: ParseErrorCode;
@@ -24,29 +24,29 @@ export const readConfigFile = async (path: string): Promise<Config> => {
     if (errors.length > 0) {
       const errorsExtended: ParseErrorExtended[] = [];
       visit(raw, {
-        onError: (error, offset, length, startLine, startCharacter) =>
-          errorsExtended.push({
-            errorCode: error,
-            errorName: printParseErrorCode(error),
-            offset,
-            length,
-            line: startLine + 1,
-            column: startCharacter + 1,
-            content: raw.split(/\r\n|\r|\n/)[startLine],
-          }),
-        onObjectBegin: () => {},
-        onObjectProperty: () => {},
-        onObjectEnd: () => {},
         onArrayBegin: () => {},
         onArrayEnd: () => {},
+        onError: (error, offset, length, startLine, startCharacter) =>
+          errorsExtended.push({
+            column: startCharacter + 1,
+            content: raw.split(/\r\n|\r|\n/)[startLine],
+            errorCode: error,
+            errorName: printParseErrorCode(error),
+            length,
+            line: startLine + 1,
+            offset,
+          }),
         onLiteralValue: () => {},
+        onObjectBegin: () => {},
+        onObjectEnd: () => {},
+        onObjectProperty: () => {},
         onSeparator: () => {},
       });
       throw new ConfigError({
         message: 'The config file could not be parsed',
+        parseErrors: errorsExtended,
         path,
         type: 'parse-error',
-        parseErrors: errorsExtended,
       });
     }
     if (validator.Check(data)) {
@@ -64,42 +64,42 @@ export const readConfigFile = async (path: string): Promise<Config> => {
     }
     if (err instanceof SyntaxError) {
       throw new ConfigError({
+        cause: err,
         message: 'The config file could not be parsed',
         path,
         type: 'parse-error',
-        cause: err,
       });
     }
     if (err instanceof Error && 'code' in err) {
       const code = (err as NodeJS.ErrnoException).code;
       if (code === 'ENOENT') {
         throw new ConfigError({
+          cause: err,
           message: 'The config file could not be found',
           path,
           type: 'file-ENOENT',
-          cause: err,
         });
       } else if (code === 'EACCES') {
         throw new ConfigError({
+          cause: err,
           message: 'The config file could not be accessed because of missing permissions',
           path,
           type: 'file-EACCES',
-          cause: err,
         });
       } else if (code === 'EISDIR') {
         throw new ConfigError({
+          cause: err,
           message: 'The provided config file path is a directory',
           path,
           type: 'file-EISDIR',
-          cause: err,
         });
       }
     }
     throw new ConfigError({
+      cause: err as Error,
       message: 'The config file could not be parsed for unknown reasons',
       path,
       type: 'unknown',
-      cause: err as Error,
     });
   }
 };

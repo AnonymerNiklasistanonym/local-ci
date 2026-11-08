@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Worker } from 'worker_threads';
 import type { InternalJob, InternalStage } from '../../config/config.js';
-import { createWorker } from '../../worker/create.js';
 import type { JobState, StageState } from '../../worker/states.js';
-import type { WorkerMessage } from '../../worker/messages.js';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Logger } from 'pino';
+import type { Worker } from 'worker_threads';
+import type { WorkerMessage } from '../../worker/messages.js';
+import { createWorker } from '../../worker/create.js';
 import { join } from 'path';
 import { name } from '../../constants/info.js';
 
@@ -62,8 +62,8 @@ export function useJobs({ stages, logger }: UseJobsProps) {
             id: stage.id,
             name: stage.name,
             progress: 0,
-            status: 'running',
             startTimeMs: performance.now(),
+            status: 'running',
           }),
         );
         setJobs((prev) =>
@@ -75,8 +75,8 @@ export function useJobs({ stages, logger }: UseJobsProps) {
                   logs: [],
                   name: newJob.name,
                   progress: 0,
-                  status: 'created',
                   startTimeMs: performance.now(),
+                  status: 'created',
                 }) satisfies JobState,
             ),
           ),
@@ -100,7 +100,7 @@ export function useJobs({ stages, logger }: UseJobsProps) {
                   return prevJob;
                 }
                 if (msg.type === 'start') {
-                  logger.debug({ jobId: job.id, job, msg }, 'worker started');
+                  logger.debug({ job, jobId: job.id, msg }, 'worker started');
                   return { ...prevJob, progress: 0, status: 'running' };
                 }
                 if (msg.type === 'start:command') {
@@ -122,14 +122,14 @@ export function useJobs({ stages, logger }: UseJobsProps) {
                   };
                 }
                 if (msg.type === 'done:command') {
-                  logger.debug({ jobId: job.id, exitCode: msg.code, msg }, 'worker done with command');
+                  logger.debug({ exitCode: msg.code, jobId: job.id, msg }, 'worker done with command');
                   return {
                     ...prevJob,
-                    progress: msg.progress,
+                    exitCode: msg.code,
                     logs: msg.logs,
+                    progress: msg.progress,
                     // Only update this one when the worker is 100% done
                     //timeWorkerMs: msg.timeWorkerMs,
-                    exitCode: msg.code,
                   };
                 }
                 if (msg.type === 'error') {
@@ -138,19 +138,19 @@ export function useJobs({ stages, logger }: UseJobsProps) {
                   return { ...prevJob };
                 }
                 if (msg.type === 'done') {
-                  logger.debug({ jobId: job.id, exitCode: msg.code, msg }, 'worker done with commands');
+                  logger.debug({ exitCode: msg.code, jobId: job.id, msg }, 'worker done with commands');
                   // TODO Terminate on error
                   return {
                     ...prevJob,
+                    exitCode: msg.code,
+                    logs: msg.logs,
                     progress: 100,
                     status: msg.code === 0 ? 'success' : job.allowedToFail ? 'warning' : 'error',
-                    logs: msg.logs,
                     timeWorkerMs: msg.timeWorkerMs,
-                    exitCode: msg.code,
                   };
                 }
                 if (msg.type === 'exit') {
-                  logger.debug({ jobId: job.id, exitCode: msg.code, msg }, 'worker process exited');
+                  logger.debug({ exitCode: msg.code, jobId: job.id, msg }, 'worker process exited');
                 }
                 return prevJob;
               }),
@@ -228,5 +228,5 @@ export function useJobs({ stages, logger }: UseJobsProps) {
     setRunId((prev) => prev + 1);
   }, []);
 
-  return { done, stages: stagesInternal, jobs, reset };
+  return { done, jobs, reset, stages: stagesInternal };
 }

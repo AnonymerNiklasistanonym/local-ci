@@ -15,7 +15,7 @@ const ignoreReactDevToolsPlugin = {
   setup(build: any) {
     // Intercept import of react-devtools-core and point it to an empty namespace
     build.onResolve({ filter: /^react-devtools-core$/ }, (args: any) => {
-      return { path: args.path, namespace: 'ignore-devtools' };
+      return { namespace: 'ignore-devtools', path: args.path };
     });
     // Return empty content for modules in that namespace
     build.onLoad({ filter: /.*/, namespace: 'ignore-devtools' }, () => {
@@ -29,28 +29,28 @@ for (const config of [
     outdir: `./dist_bun_${pkg.name}_v${pkg.version}`,
   } as const,
   {
-    compile: { target: 'bun-linux-x64', outfile: `./dist_bun/${pkg.name}-v${pkg.version}-linux-x64` },
+    compile: { outfile: `./dist_bun/${pkg.name}-v${pkg.version}-linux-x64`, target: 'bun-linux-x64' },
   } as const,
   {
-    compile: { target: 'bun-windows-x64', outfile: `./dist_bun/${pkg.name}-v${pkg.version}-win-x64.exe` },
+    compile: { outfile: `./dist_bun/${pkg.name}-v${pkg.version}-win-x64.exe`, target: 'bun-windows-x64' },
   } as const,
   {
     outdir: `./dist_bun_${pkg.name}_v${pkg.version}`,
   } as const,
 ])
   await Bun.build({
-    entrypoints: ['./src/cli.tsx', './src/worker/worker.ts'],
-    root: './src',
     define: {
-      'process.env.NODE_ENV': '"production"',
       __WORKER_PATH__: './worker/worker.js',
+      'process.env.NODE_ENV': '"production"',
     },
-    target: 'bun', // allow Node.js built-in modules
+    entrypoints: ['./src/cli.tsx', './src/worker/worker.ts'],
     plugins: [
       bunPluginPino({
         transports: ['pino-pretty', 'pino/file'],
       }),
       ignoreReactDevToolsPlugin,
     ],
+    root: './src',
+    target: 'bun', // allow Node.js built-in modules,
     ...config,
   });
