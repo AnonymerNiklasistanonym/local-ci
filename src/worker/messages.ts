@@ -1,3 +1,8 @@
+/** The data structure for logs from the worker */
+export type WorkerLog =
+  | ['stdout' | 'stderr' | 'command', string]
+  | ['command:status', { exitCode?: number; error?: string; timeMs: number }];
+
 /** Messages sent from Worker to main thread */
 export type WorkerMessage =
   // Worker was started
@@ -11,6 +16,12 @@ export type WorkerMessage =
       indexCommand: number;
       text: string;
     }
+  | {
+      type: 'command:status';
+      jobId: string;
+      indexCommand: number;
+      data: { exitCode: number; timeMs: number };
+    }
   // There was an error while running the command
   | { type: 'error'; jobId: string; indexCommand?: number; text: string }
   // A command was executed
@@ -22,7 +33,7 @@ export type WorkerMessage =
       /** The code with which the command terminated */
       code: number;
       /** TODO: Sometimes logs do not seem to be transmitted in time so send all logs again */
-      logs: ['stdout' | 'stderr' | 'command', string][];
+      logs: WorkerLog[];
       timeWorkerMs: number;
     }
   // Worker is done
@@ -31,6 +42,8 @@ export type WorkerMessage =
       jobId: string;
       /** The code with which the last command terminated */
       code: number;
+      /** TODO: Sometimes logs do not seem to be transmitted in time so send all logs again */
+      logs: WorkerLog[];
       timeWorkerMs: number;
     }
   // Worker process exited

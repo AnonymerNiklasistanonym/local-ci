@@ -4,24 +4,20 @@ import { parentPort, workerData, threadId } from 'worker_threads';
 
 import { spawn } from 'child_process';
 import type { WorkerData } from './data.js';
-import type { WorkerMessage } from './messages.js';
+import type { WorkerLog, WorkerMessage } from './messages.js';
 import { appendFileSync } from 'fs';
-import { join } from 'path';
-import pkg from '../../package.json' with { type: 'json' };
 
 // Get data with which the worker is started
-const { commands, cwd, jobId, logToFile } = workerData as WorkerData;
-
-const LOG_FILE = join(process.cwd(), `${pkg.name}-worker-${jobId}.log`);
+const { commands, cwd, jobId, logFile } = workerData as WorkerData;
 
 const log = (tag: string, extra?: unknown) => {
-  if (!logToFile) return;
+  if (!logFile) return;
   const line =
     `[${new Date().toISOString()}] [thread ${threadId}] [pid ${process.pid}] ${tag}` +
     (extra !== undefined ? ` ${JSON.stringify(extra)}` : '') +
     '\n';
   try {
-    appendFileSync(LOG_FILE, line);
+    appendFileSync(logFile, line);
   } catch {
     // don't let logging errors stop the worker
   }
@@ -39,6 +35,7 @@ parentPort!.once('message', async (msgHost) => {
   log('received host message', msgHost);
   send({ type: 'start', jobId, threadId, commands, cwd });
   const startedAt = performance.now();
+  const logs: WorkerLog[] = [];
 
   try {
     let indexCommand = 0;
@@ -49,8 +46,8 @@ parentPort!.once('message', async (msgHost) => {
       let file: string;
       let args: string[];
       let shell: boolean;
+      const logsCommand: WorkerLog[] = [];
 
-      const logs: ['stdout' | 'stderr' | 'command', string][] = [];
       const startedAtCommand = performance.now();
 
       if (typeof command === 'string') {
@@ -58,12 +55,12 @@ parentPort!.once('message', async (msgHost) => {
         file = command;
         args = [];
         shell = true;
-        logs.push(['command', command]);
+        logsCommand.push(['command', command]);
       } else {
         // argv mode: already split, no shell
         [file, ...args] = command;
         shell = false;
-        logs.push(['command', command.join(' ')]);
+        logsCommand.push(['command', command.join(' ')]);
       }
       send({
         type: 'command',
@@ -73,6 +70,12 @@ parentPort!.once('message', async (msgHost) => {
       });
 
       currentExitCode = await new Promise<number>((resolve) => {
+        send({
+          type: 'start:command',
+          jobId,
+          command,
+          indexCommand,
+        });
         const child = spawn(file, args, {
           cwd,
           shell,
@@ -82,15 +85,9 @@ parentPort!.once('message', async (msgHost) => {
             FORCE_COLOR: '1', // Force color output
           },
         });
-        send({
-          type: 'start:command',
-          jobId,
-          command,
-          indexCommand,
-        });
 
         child.stdout.on('data', (d: Buffer) => {
-          logs.push(['stdout', d.toString()]);
+          logsCommand.push(['stdout', d.toString()]);
           send({
             type: 'stdout',
             jobId,
@@ -99,7 +96,7 @@ parentPort!.once('message', async (msgHost) => {
           });
         });
         child.stderr.on('data', (d: Buffer) => {
-          logs.push(['stderr', d.toString()]);
+          logsCommand.push(['stderr', d.toString()]);
           send({
             type: 'stderr',
             jobId,
@@ -115,12 +112,16 @@ parentPort!.once('message', async (msgHost) => {
             indexCommand,
             text: err.message,
           });
+          logsCommand.push([
+            'command:status',
+            { error: err.message, timeMs: performance.now() - startedAtCommand },
+          ] as WorkerLog);
           send({
             type: 'done:command',
             jobId,
             indexCommand,
             code: 1,
-            logs,
+            logs: logsCommand,
             progress: (indexCommand / commands.length) * 100,
             timeWorkerMs: performance.now() - startedAtCommand,
           });
@@ -128,22 +129,25 @@ parentPort!.once('message', async (msgHost) => {
         });
 
         child.on('close', (code) => {
+          logsCommand.push(['command:status', { exitCode: code ?? 0, timeMs: performance.now() - startedAtCommand }]);
           send({
             type: 'done:command',
             jobId,
             indexCommand,
             code: code ?? 0,
-            logs,
+            logs: logsCommand,
             progress: (indexCommand / commands.length) * 100,
             timeWorkerMs: performance.now() - startedAtCommand,
           });
           resolve(code ?? 0);
         });
       });
+      logs.push(...logsCommand);
     }
     send({
       type: 'done',
       jobId,
+      logs,
       code: currentExitCode,
       timeWorkerMs: performance.now() - startedAt,
     });
@@ -157,6 +161,7 @@ parentPort!.once('message', async (msgHost) => {
     send({
       type: 'done',
       jobId,
+      logs,
       code: -1,
       timeWorkerMs: performance.now() - startedAt,
     });

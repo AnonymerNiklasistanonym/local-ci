@@ -13,6 +13,8 @@ import { stripVTControlCharacters } from 'node:util';
 import { RunPipelineStatus } from './RunPipelineStatus.js';
 import { RunJobDetails } from './RunJobDetails.js';
 import { ManualExit } from '../components/ManualExit.js';
+import { humanTime } from '../../utils/human.js';
+import { RunJobLog } from './RunJobLog.js';
 
 interface RunViewProps extends GenericViewProps {
   renderAsString?: boolean;
@@ -21,10 +23,19 @@ interface RunViewProps extends GenericViewProps {
 const copyLogs = (jobStage: JobState, stripAnsiSymbols: boolean = true) => {
   clipboardy.writeSync(
     [
-      `${createJobStateDisplayName(jobStage)} ${createJobStateInfo(jobStage)}`,
+      `${createJobStateDisplayName(jobStage)} [${createJobStateInfo(jobStage, true).join(', ')}]`,
       ...jobStage.logs.map(([type, message]) => {
-        const updatedMessage = stripAnsiSymbols ? stripVTControlCharacters(message) : message;
-        return type === 'command' ? `$ ${updatedMessage}` : updatedMessage.trimEnd();
+        switch (type) {
+          case 'command':
+            return `$ ${message}`;
+          case 'command:status':
+            return `[${[message.error && `ERROR(${message.error})`, message.exitCode, humanTime(message.timeMs)]
+              .filter((a): a is string => Boolean(a))
+              .join(', ')}]`;
+          default:
+            const updatedMessage = stripAnsiSymbols ? stripVTControlCharacters(message) : message;
+            return updatedMessage.trimEnd();
+        }
       }),
     ].join('\n'),
   );
@@ -49,9 +60,48 @@ export function RunView({ config, logger, interactive, fullscreen }: RunViewProp
     activeJob && 'q quit',
     interactive && 'r repeat',
     !done && 's skip',
+    done && 'e exit',
   ]
     .filter((a): a is string => Boolean(a))
     .join(' | ');
+
+  const additionalOutput = () =>
+    renderToString(
+      <>
+        {/* Print stage status to the console after exiting the interactive render process */}
+        {fullscreen && <RunPipelineStatus jobs={jobs} stages={stages} activeJob={activeJob} />}
+        {/* Print failed jobs to the console after exiting the interactive render process */}
+        {jobs
+          .filter((a) => a.status === 'error')
+          .toSorted((a, b) => a.id.localeCompare(b.id))
+          .map((job) => (
+            <Box key={job.id} flexDirection="column">
+              <Text dimColor>{'─'.repeat(columns)}</Text>
+              <Text color={statusColor[job.status]}>{createJobStateDisplayName(job)}</Text>
+              <Text dimColor>{'─'.repeat(columns)}</Text>
+              {job.logs.map((log, i) => (
+                <RunJobLog key={i} log={log} />
+              ))}
+            </Box>
+          ))}
+      </>,
+      { columns: process.stdout.columns },
+    );
+
+  const exitView = () => {
+    // TODO Propagate error code to app for error code on manual quit
+    switch (done) {
+      case 'success':
+      case 'warning':
+        exit({ exitCode: 0, additionalOutput } satisfies CommandReturnValue);
+        return;
+      case 'error':
+        exit({ exitCode: 1, additionalOutput } satisfies CommandReturnValue);
+        return;
+      default:
+      // Do nothing
+    }
+  };
 
   useInput((input, key) => {
     const jobsSorted = jobs.toSorted((a, b) => a.id.localeCompare(b.id));
@@ -61,13 +111,24 @@ export function RunView({ config, logger, interactive, fullscreen }: RunViewProp
         if (jobsSorted.length === 0) return undefined;
         // Return either the first element or find the last one and then go to the next one
         const previousIndex = jobsSorted.findIndex((a) => a.id === prev?.id);
-        let index: number;
-        if (previousIndex === undefined) {
-          index = 0;
+        let id: string;
+        if (previousIndex === -1) {
+          // If there are any currently relevant active jobs go to the first/last one of them initally
+          const relevantActiveJobs = jobsSorted.filter(
+            (a) => a.status === 'error' || a.status === 'warning' || a.status === 'running',
+          );
+          if (relevantActiveJobs.length > 0) {
+            id = key.leftArrow ? relevantActiveJobs.slice(-1)[0].id : relevantActiveJobs[0].id;
+          } else {
+            // If no relevant jobs exist go to the first/last active job
+            const index = key.leftArrow ? jobsSorted.length - 1 : 0;
+            id = jobsSorted[index].id;
+          }
         } else {
-          index = (previousIndex + (key.leftArrow ? -1 : 1) + jobsSorted.length) % jobsSorted.length;
+          const index = (previousIndex + (key.leftArrow ? -1 : 1) + jobsSorted.length) % jobsSorted.length;
+          id = jobsSorted[index].id;
         }
-        return { id: jobsSorted[index].id };
+        return { id };
       });
     }
     // Press r to restart
@@ -79,28 +140,34 @@ export function RunView({ config, logger, interactive, fullscreen }: RunViewProp
     if (input === 's') {
       logger.debug(`User pressed ${input} to skip the pipeline`);
       const exitCode = 0;
-      const additionalOutput = () =>
-        renderToString(<ManualExit message="Pipeline was manually skipped" exitCode={exitCode} />, {
-          columns: process.stdout.columns,
-        });
-      exit({ exitCode, additionalOutput } satisfies CommandReturnValue);
+      exit({
+        exitCode,
+        additionalOutput: () =>
+          renderToString(<ManualExit message="Pipeline was manually skipped" exitCode={exitCode} />, {
+            columns: process.stdout.columns,
+          }),
+      } satisfies CommandReturnValue);
     }
     // Press l to copy the current logs
     if (input.toLowerCase() === 'l' && activeJob) {
       logger.debug(`User pressed ${input} to copy logs`);
       copyLogs(activeJob, input === 'l');
     }
+    // Press e to exit the interactive mode
+    if (input === 'e' && done) {
+      logger.debug(`User pressed ${input} to exit`);
+      exitView();
+    }
   });
 
   useEffect(() => {
-    if (done && activeJobTracker === undefined) {
+    if (done && interactive && activeJobTracker === undefined) {
       switch (done) {
         case 'warning':
         case 'error':
-          // Go to the first job that failed/threw a warning
+          // Go to the first job that failed/threw a warning when done
           for (const job of jobs.toSorted((a, b) => a.id.localeCompare(b.id))) {
             if (job.status === done) {
-              // TODO index?????
               setActiveJobTracker({ id: job.id });
               break;
             }
@@ -113,52 +180,9 @@ export function RunView({ config, logger, interactive, fullscreen }: RunViewProp
   }, [done, jobs]);
 
   useEffect(() => {
-    const additionalOutput = () =>
-      renderToString(
-        <>
-          {/* Print stage status to the console after exiting the interactive render process */}
-          {/* TODO Move to its own component so there is no redundant code! */}
-          {fullscreen && <RunPipelineStatus jobs={jobs} stages={stages} activeJob={activeJob} />}
-          {/* Print failed jobs to the console after exiting the interactive render process */}
-          {jobs
-            .filter((a) => a.status === 'error')
-            .toSorted((a, b) => a.id.localeCompare(b.id))
-            .map((job) => (
-              <Box key={job.id} flexDirection="column">
-                <Text dimColor>{'─'.repeat(columns)}</Text>
-                <Text color={statusColor[job.status]}>{createJobStateDisplayName(job)}</Text>
-                <Text dimColor>{'─'.repeat(columns)}</Text>
-                {job.logs.map(([type, message], i) =>
-                  type === 'command' ? (
-                    <Text key={`active-job-${i}`} color="gray">
-                      $ {message}
-                    </Text>
-                  ) : (
-                    <Text key={`active-job-${i}`} color={type === 'stderr' ? 'yellow' : 'white'}>
-                      {message.trimEnd()}
-                    </Text>
-                  ),
-                )}
-              </Box>
-            ))}
-        </>,
-        { columns: process.stdout.columns },
-      );
     // TODO Propagate error code to app for error code on manual quit
-    switch (done) {
-      case 'success':
-      case 'warning':
-        if (!interactive) {
-          exit({ exitCode: 0, additionalOutput } satisfies CommandReturnValue);
-        }
-        return;
-      case 'error':
-        if (!interactive) {
-          exit({ exitCode: 0, additionalOutput } satisfies CommandReturnValue);
-        }
-        return;
-      default:
-      // Do nothing
+    if (!interactive) {
+      exitView();
     }
   }, [done]);
 
@@ -191,7 +215,7 @@ export function RunView({ config, logger, interactive, fullscreen }: RunViewProp
       {activeJob && (
         <RunJobDetails
           activeJob={activeJob}
-          // Remove one line because some terminals like to show the current command on top, idk why I need to remove another line
+          // Remove one line because some terminals like to show the current command on top
           heightView={stages.length + (showInstructions ? 2 : 0) + (showProgressBar ? 1 : 0) + 2}
         />
       )}

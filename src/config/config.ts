@@ -100,6 +100,7 @@ export const InternalStageT = Type.Intersect([
   StageT,
   Type.Object({
     id: Type.String({ description: 'Internal pipeline ID for this stage' }),
+    jobs: Type.Array(InternalJobT),
   }),
 ]);
 

@@ -47,7 +47,7 @@
           "name": "test",
           "commands": [
             ["npm", "run", "test"],
-            ["sleep", "100000"]
+            ["sleep", "10"]
           ]
         }
       ]

@@ -61,12 +61,12 @@ export const updateConfigFile = (config: Config, configFile: string, filter: Com
     stages: config.stages
       .filter((stage) => filterStage(stage, filter))
       .reduce((internalStages, currStage) => {
-        const stageId = `${indexStage + 1}`;
+        const stageId = `${indexStage}`;
         let indexJob = 1;
         const jobs = currStage.jobs
           .filter((job) => filterJob(job, filter))
           .reduce((internalJobs, currJob) => {
-            const jobId = `${stageId}.${indexJob + 1}`;
+            const jobId = `${stageId}.${indexJob}`;
             indexJob++;
             return internalJobs.concat({
               ...currJob,

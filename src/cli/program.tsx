@@ -7,6 +7,7 @@ import type { Logger } from 'pino';
 import { PRODUCTION } from '../env.js';
 import { withFullScreen } from 'fullscreen-ink';
 import { FilterInfo } from '../views/components/FilterInfo.js';
+import { sep } from 'path';
 
 export type Mode = 'info' | 'run';
 
@@ -53,14 +54,14 @@ export const command = new Command()
       logger = createLogger(options.verbose ? `${pkg.name}.log` : undefined, options.verbose ? 'debug' : 'silent');
       if (options.verbose) {
         console.log(`${pkg.name} v${pkg.version}${PRODUCTION ? '' : ' [dev build]'}`);
-
-        logger.info(`Create logs in ${`${pkg.name}.log`}`);
+        console.log(`Create logs in ${`.${sep}${pkg.name}.log`}`);
       }
 
       if (
-        (options.also && options.also.length > 0) ||
-        (options.skip && options.skip.length > 0) ||
-        (options.only && options.only.length > 0)
+        mode === 'run' &&
+        ((options.also && options.also.length > 0) ||
+          (options.skip && options.skip.length > 0) ||
+          (options.only && options.only.length > 0))
       ) {
         const filterInfo = renderToString(<FilterInfo {...options} />, {
           columns: process.stdout.columns,

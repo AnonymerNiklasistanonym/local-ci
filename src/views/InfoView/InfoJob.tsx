@@ -20,7 +20,7 @@ export const InfoJob = ({ indexStage, indexJob, job }: InfoJobProps) => {
         {job.allowedToFail ? <Badge color={'yellow'}>allowed to fail</Badge> : ''}
         {job.labels?.map((label, l) => (
           <Badge key={l} color={'magenta'}>
-            :{label}
+            <Text>:{label}</Text>
           </Badge>
         ))}
       </Box>

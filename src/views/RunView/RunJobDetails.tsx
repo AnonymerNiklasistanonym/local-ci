@@ -1,8 +1,10 @@
 import { Box, Text, useWindowSize } from 'ink';
-import { statusColor } from '../constants/status.js';
+import { statusColor, statusIcon } from '../constants/status.js';
 import type { JobState } from '../../worker/states.js';
 import { createJobStateDisplayName, createJobStateInfo } from '../helper/state.js';
 import { TerminalWindow } from '../components/TerminalWindow.js';
+import { ElapsedTime } from '../components/ElapsedTime.js';
+import { RunJobLog } from './RunJobLog.js';
 
 interface RunJobDetailsProps {
   /** The current height of the view in order to maximize the terminal scroll window inside it */
@@ -20,20 +22,20 @@ export const RunJobDetails = ({ activeJob, heightView }: RunJobDetailsProps) => 
         <TerminalWindow
           color={statusColor[activeJob.status]}
           title={createJobStateDisplayName(activeJob)}
-          subtitle={createJobStateInfo(activeJob)}
-          height={rows - heightView}
-        >
-          {activeJob.logs.map(([type, message], i) =>
-            type === 'command' ? (
-              <Text key={`active-job-${i}`} color="gray">
-                $ {message}
-              </Text>
+          info={activeJob.status === 'running' ? undefined : createJobStateInfo(activeJob)}
+          status={
+            activeJob.status === 'running' && activeJob.startTimeMs !== undefined ? (
+              <ElapsedTime startTimeMs={activeJob.startTimeMs} />
             ) : (
-              <Text key={`active-job-${i}`} color={type === 'stderr' ? 'yellow' : 'white'}>
-                {message.trimEnd()}
-              </Text>
-            ),
-          )}
+              statusIcon[activeJob.status]
+            )
+          }
+          height={rows - heightView}
+          inProgress={activeJob.status === 'running'}
+        >
+          {activeJob.logs.map((log, i) => (
+            <RunJobLog key={i} log={log} />
+          ))}
         </TerminalWindow>
       )}
     </Box>

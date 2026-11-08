@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Worker } from 'worker_threads';
-import type { Job, Stage } from '../../config/config.js';
+import type { InternalJob, InternalStage } from '../../config/config.js';
 import { createWorker } from '../../worker/create.js';
 import type { JobState, StageState } from '../../worker/states.js';
 import type { WorkerMessage } from '../../worker/messages.js';
 import type { Logger } from 'pino';
+import { join } from 'path';
+import pkg from '../../../package.json' with { type: 'json' };
 
 interface UseJobsProps {
-  stages: Stage[];
+  stages: InternalStage[];
   logger: Logger;
 }
 
@@ -26,14 +28,15 @@ export function useJobs({ stages, logger }: UseJobsProps) {
     const workers = workersRef.current;
 
     // Create a wrapper function around starting a worker that can be awaited
-    const createWorkerJobWrapper = (job: Job, jobId: string, onMessage: (msg: WorkerMessage) => void) =>
-      new Promise<{ code?: number; jobId: string; job: Job }>((resolve, reject) => {
+    const createWorkerJobWrapper = (job: InternalJob, onMessage: (msg: WorkerMessage) => void) =>
+      new Promise<{ code?: number; job: InternalJob }>((resolve, reject) => {
+        const logFile = join(process.cwd(), `${pkg.name}-worker-${job.id}.log`);
         const worker = createWorker(
-          { commands: job.commands, jobId, logToFile: logger.level === 'debug' },
+          { commands: job.commands, jobId: job.id, logFile: logger.level === 'debug' ? logFile : undefined },
           onMessage,
           logger,
         );
-        logger.debug({ jobId, job }, 'Create worker job');
+        logger.debug({ job }, 'Create worker job');
         workersRef.current.push(worker);
         let code: number | undefined = undefined;
         worker.on('error', (err) => reject(err));
@@ -42,7 +45,7 @@ export function useJobs({ stages, logger }: UseJobsProps) {
             code = msg.code;
           }
         });
-        worker.on('exit', () => resolve({ code, jobId, job }));
+        worker.on('exit', () => resolve({ code, job }));
         // Trigger worker
         worker.postMessage('trigger', []);
       });
@@ -53,13 +56,14 @@ export function useJobs({ stages, logger }: UseJobsProps) {
       let indexStage = 0;
       for (const stage of stages) {
         indexStage++;
-        logger.debug({ jobs, stage }, 'Add jobs from stage');
+        logger.debug({ jobs, stage }, 'Create stage and add jobs from it');
         setStages((prev) =>
           prev.concat({
-            id: `${indexStage}`,
+            id: stage.id,
             name: stage.name,
             progress: 0,
-            status: 'created',
+            status: 'running',
+            startTimeMs: performance.now(),
           }),
         );
         setJobs((prev) =>
@@ -72,17 +76,17 @@ export function useJobs({ stages, logger }: UseJobsProps) {
                   name: newJob.name,
                   progress: 0,
                   status: 'created',
+                  startTimeMs: performance.now(),
                 }) satisfies JobState,
             ),
           ),
         );
         logger.debug({ jobs, stageJobs: stage.jobs }, 'Create a worker for each job');
-        const stagePromises: Promise<{ code?: number; jobId: string; job: Job }>[] = [];
+        const stagePromises: Promise<{ code?: number; job: InternalJob }>[] = [];
         let indexJob = 0;
         for (const job of stage.jobs) {
           indexJob++;
-          const jobId = `${indexStage}.${indexJob}`;
-          const worker = createWorkerJobWrapper(job, jobId, (msg) => {
+          const worker = createWorkerJobWrapper(job, (msg) => {
             // Update jobs
             setJobs((prev) =>
               prev.map((prevJob) => {
@@ -96,48 +100,57 @@ export function useJobs({ stages, logger }: UseJobsProps) {
                   return prevJob;
                 }
                 if (msg.type === 'start') {
-                  logger.debug({ jobId, job, msg }, 'worker started');
-                  return { ...prevJob, progress: 0 };
+                  logger.debug({ jobId: job.id, job, msg }, 'worker started');
+                  return { ...prevJob, progress: 0, status: 'running' };
                 }
                 if (msg.type === 'start:command') {
-                  logger.debug({ jobId, msg }, 'worker started with command');
+                  logger.debug({ jobId: job.id, msg }, 'worker started with command');
                   return { ...prevJob };
                 }
                 if (msg.type === 'command' || msg.type === 'stdout' || msg.type === 'stderr') {
-                  logger.debug({ jobId, msg });
+                  logger.debug({ jobId: job.id, msg });
                   return {
                     ...prevJob,
                     logs: [...prevJob.logs, [msg.type, msg.text]],
                   };
                 }
+                if (msg.type === 'command:status') {
+                  logger.debug({ jobId: job.id, msg });
+                  return {
+                    ...prevJob,
+                    logs: [...prevJob.logs, [msg.type, msg.data]],
+                  };
+                }
                 if (msg.type === 'done:command') {
-                  logger.debug({ jobId, exitCode: msg.code, msg }, 'worker done with command');
+                  logger.debug({ jobId: job.id, exitCode: msg.code, msg }, 'worker done with command');
                   return {
                     ...prevJob,
                     progress: msg.progress,
                     logs: msg.logs,
-                    timeWorkerMs: msg.timeWorkerMs,
+                    // Only update this one when the worker is 100% done
+                    //timeWorkerMs: msg.timeWorkerMs,
                     exitCode: msg.code,
                   };
                 }
                 if (msg.type === 'error') {
-                  logger.error({ jobId, msg }, 'worker encountered an error');
+                  logger.error({ jobId: job.id, msg }, 'worker encountered an error');
                   // TODO Terminate on error
                   return { ...prevJob };
                 }
                 if (msg.type === 'done') {
-                  logger.debug({ jobId, exitCode: msg.code, msg }, 'worker done with commands');
+                  logger.debug({ jobId: job.id, exitCode: msg.code, msg }, 'worker done with commands');
                   // TODO Terminate on error
                   return {
                     ...prevJob,
                     progress: 100,
                     status: msg.code === 0 ? 'success' : job.allowedToFail ? 'warning' : 'error',
+                    logs: msg.logs,
                     timeWorkerMs: msg.timeWorkerMs,
                     exitCode: msg.code,
                   };
                 }
                 if (msg.type === 'exit') {
-                  logger.debug({ jobId, exitCode: msg.code, msg }, 'worker process exited');
+                  logger.debug({ jobId: job.id, exitCode: msg.code, msg }, 'worker process exited');
                 }
                 return prevJob;
               }),
@@ -146,7 +159,7 @@ export function useJobs({ stages, logger }: UseJobsProps) {
           stagePromises.push(worker);
         }
 
-        // Wait until all stage promises are one
+        // Wait until all stage promises are done
         logger.debug('Wait until all promises were awaited');
         const results = await Promise.all(stagePromises);
         logger.debug({ results }, 'All promises were awaited');
@@ -160,7 +173,10 @@ export function useJobs({ stages, logger }: UseJobsProps) {
               : 'error';
         setStages((prev) =>
           prev.map((stageState) => {
-            const stageJobs = results.filter((a) => a.jobId.startsWith(`${stageState.id}.`));
+            if (stageState.id !== stage.id) {
+              return stageState;
+            }
+            const stageJobs = results.filter((a) => a.job.stageId === stageState.id);
             const failedJobs = stageJobs.filter((a) => a.code !== 0);
             const allowedToFailJobs = failedJobs.filter((a) => a.job.allowedToFail === true);
             const status =
@@ -174,6 +190,7 @@ export function useJobs({ stages, logger }: UseJobsProps) {
               progress: 100,
               // TODO What if no success!
               status,
+              timeWorkerMs: stageState.startTimeMs ? performance.now() - stageState.startTimeMs : undefined,
             };
           }),
         );

@@ -19,12 +19,12 @@ export const FilterInfo = ({ also, only, skip }: FilterInfoProps) => {
           <Text>Only run:</Text>
           {onlySorted.filter(isNotALabel).map((a, index) => (
             <Badge key={index} color={colors.filter.only}>
-              {a}
+              <Text>{a}</Text>
             </Badge>
           ))}
           {onlySorted.filter(isLabel).map((a, index) => (
             <Badge key={index} color={colors.filter.only}>
-              {a}
+              <Text>{a}</Text>
             </Badge>
           ))}
         </Box>
@@ -34,12 +34,12 @@ export const FilterInfo = ({ also, only, skip }: FilterInfoProps) => {
           <Text>Skip:{' '.repeat(4)}</Text>
           {skipSorted.filter(isNotALabel).map((a, index) => (
             <Badge key={index} color={colors.filter.skip}>
-              {a}
+              <Text>{a}</Text>
             </Badge>
           ))}
           {skipSorted.filter(isLabel).map((a, index) => (
             <Badge key={index} color={colors.filter.skip}>
-              {a}
+              <Text>{a}</Text>
             </Badge>
           ))}
         </Box>
@@ -49,12 +49,12 @@ export const FilterInfo = ({ also, only, skip }: FilterInfoProps) => {
           <Text>Also run:</Text>
           {alsoSorted.filter(isNotALabel).map((a, index) => (
             <Badge key={index} color={colors.filter.also}>
-              {a}
+              <Text>{a}</Text>
             </Badge>
           ))}
           {alsoSorted.filter(isLabel).map((a, index) => (
             <Badge key={index} color={colors.filter.also}>
-              {a}
+              <Text>{a}</Text>
             </Badge>
           ))}
         </Box>

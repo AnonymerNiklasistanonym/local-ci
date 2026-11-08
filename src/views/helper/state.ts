@@ -1,20 +1,19 @@
 import { humanTime } from '../../utils/human.js';
 import type { JobState } from '../../worker/states.js';
-import { statusIcon } from '../constants/status.js';
 
-export const createJobStateInfo = (jobState: JobState) => {
+export const createJobStateInfo = (jobState: JobState, logs: boolean = false) => {
   const infos: string[] = [];
-  if (jobState.exitCode !== undefined) {
+  if (jobState.exitCode !== undefined && logs) {
+    infos.push(`Exit code: ${jobState.exitCode}`);
+  } else if (jobState.exitCode !== undefined && jobState.exitCode !== 0) {
     infos.push(`${jobState.exitCode}`);
   }
   if (jobState.timeWorkerMs) {
-    infos.push(humanTime(jobState.timeWorkerMs));
+    infos.push(logs ? 'Total time: ' : '' + humanTime(jobState.timeWorkerMs));
+  } else if (logs && jobState.startTimeMs) {
+    infos.push(`Time until now: ${humanTime(performance.now() - jobState.startTimeMs)}`);
   }
-  const status = statusIcon[jobState.status];
-  if (infos.length > 0) {
-    return `[${infos.join(', ')}] ${status}`;
-  }
-  return status;
+  return infos;
 };
 
 export const createJobStateDisplayName = (jobState: JobState) => {
