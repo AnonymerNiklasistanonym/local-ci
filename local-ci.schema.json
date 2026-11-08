@@ -15,24 +15,9 @@
         "type": "object",
         "required": ["jobs"],
         "properties": {
-          "name": {
-            "type": "string",
-            "description": "The name of the stage"
-          },
-          "mandatory": {
-            "type": "boolean",
-            "description": "Always run this stage, even when filter is applied"
-          },
           "explicit": {
             "type": "boolean",
             "description": "Only run this stage if explicitly requested"
-          },
-          "labels": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "description": "A label to filter stages"
-            }
           },
           "jobs": {
             "type": "array",
@@ -40,9 +25,9 @@
               "type": "object",
               "required": ["commands"],
               "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "The name of the job"
+                "allowedToFail": {
+                  "type": "boolean",
+                  "description": "On failure continue do not stop and continue with the next stage"
                 },
                 "commands": {
                   "type": "array",
@@ -66,10 +51,6 @@
                   "type": "string",
                   "description": "Directory in which the commands should be run"
                 },
-                "mandatory": {
-                  "type": "boolean",
-                  "description": "Always run this job, even when filter is applied"
-                },
                 "explicit": {
                   "type": "boolean",
                   "description": "Only run this job if explicitly requested"
@@ -81,24 +62,43 @@
                     "description": "A label to filter jobs"
                   }
                 },
-                "allowedToFail": {
+                "mandatory": {
                   "type": "boolean",
-                  "description": "On failure continue do not stop and continue with the next stage"
+                  "description": "Always run this job, even when filter is applied"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The name of the job"
                 }
               },
-              "title": "Job",
+              "additionalProperties": false,
               "description": "A job runs a sequence of commands",
-              "additionalProperties": false
+              "title": "Job"
             }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "A label to filter stages"
+            }
+          },
+          "mandatory": {
+            "type": "boolean",
+            "description": "Always run this stage, even when filter is applied"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the stage"
           }
         },
-        "title": "Stage",
+        "additionalProperties": false,
         "description": "A stage runs jobs in parallel",
-        "additionalProperties": false
+        "title": "Stage"
       }
     }
   },
-  "title": "Config",
+  "additionalProperties": false,
   "description": "A config contains all information to run a local CI, meaning a list of stages",
-  "additionalProperties": false
+  "title": "Config"
 }
