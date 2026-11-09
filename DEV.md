@@ -10,6 +10,14 @@ Logs are created using `pino` in JSON format and are best viewed using:
 cat local-ci.log | npx pino-pretty -L info -m optionalHighlight
 ```
 
+## IDEs
+
+### VSCode
+
+#### Setup
+
+There already exist recommended settings and defaults in `.vscode`.
+
 ## NPM
 
 ### Create package

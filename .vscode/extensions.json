@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    // Development
+    // > Dependency Managment
+    "pflannery.vscode-versionlens",
+    // > Git
+    "eamodio.gitlens",
+    // > Testing
+    "vitest.explorer",
+    // > Tools
+    "oxc.oxc-vscode"
+  ]
+}

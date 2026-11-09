@@ -1,0 +1,23 @@
+{
+  // Editor
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "editor.formatOnSave": true,
+  // Plugins
+  "oxc.fmt.configPath": ".oxfmtrc.json",
+  "oxc.fixKind": "safe_fix",
+  "oxc.enable": true,
+  // > Disable telemetry
+  "gitlens.telemetry.enabled": false,
+  "gitlens.integrations.enabled": false,
+  "gitlens.plusFeatures.enabled": false,
+  "gitlens.showWhatsNewAfterUpgrades": false,
+  // Personal (should be in workspace or user settings)
+  // > Git settings
+  // Inline mode instead of side-by-side
+  "diffEditor.renderSideBySide": false,
+  // Hide unchanged lines in diff view
+  "diffEditor.hideUnchangedRegions.enabled": true
+}
