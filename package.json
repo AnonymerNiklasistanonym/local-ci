@@ -3,6 +3,7 @@
   "version": "0.1.3b",
   "private": false,
   "description": "run your own local ci for example as part of a git hook",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AnonymerNiklasistanonym/local-ci.git"
