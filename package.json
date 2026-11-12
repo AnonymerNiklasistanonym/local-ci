@@ -1,6 +1,6 @@
 {
   "name": "@anonymerniklasistanonym/local-ci",
-  "version": "0.1.3b",
+  "version": "0.1.4b",
   "private": false,
   "description": "run your own local ci for example as part of a git hook",
   "license": "MIT",
