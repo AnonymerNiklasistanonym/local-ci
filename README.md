@@ -42,7 +42,13 @@ Options:
   -h, --help                 display help for command
 ```
 
-![Demo Screenshot](./docs/demo.png)
+Demo:
+
+![Demo](./docs/demo.png)
+
+Demo recording (as a git hook):
+
+![Demo recording](./docs/demo.svg)
 
 ## Configration
 
