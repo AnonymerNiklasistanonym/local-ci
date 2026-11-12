@@ -69,7 +69,7 @@ export function RunView({ config, logger, interactive, fullscreen }: RunViewProp
     renderToString(
       <>
         {/* Print stage status to the console after exiting the interactive render process */}
-        {fullscreen && <RunPipelineStatus jobs={jobs} stages={stages} activeJob={activeJob} />}
+        {fullscreen && <RunPipelineStatus jobs={jobs} stages={stages} />}
         {/* Print failed jobs to the console after exiting the interactive render process */}
         {jobs
           .filter((a) => a.status === 'error')
