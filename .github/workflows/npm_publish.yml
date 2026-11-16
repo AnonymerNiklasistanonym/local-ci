@@ -29,7 +29,7 @@ jobs:
       - name: Modify README links
         run: sed -i -E "s#(src=\"|]\()\./#\1https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_REF_NAME}/#g" README.md
       - run: |
-          if [[ "${{ github.ref_name }}" == *b* ]]; then
+          if [[ "${{ github.ref_name }}" == *"-beta"* ]]; then
             npm publish --access public --tag beta
             # Move the 'latest' tag to the beta version (for now where no stable version yet exists)
             npm dist-tag add $(npm pkg get name | tr -d '"')@$(node -p "require('./package.json').version") latest
