@@ -1,6 +1,6 @@
 {
   "name": "@anonymerniklasistanonym/local-ci",
-  "version": "0.1.5-beta",
+  "version": "0.1.5-beta.0",
   "private": false,
   "description": "run your own local ci for example as part of a git hook",
   "license": "MIT",
@@ -53,5 +53,8 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"
+  },
+  "release": {
+    "tagFormat": "${version}"
   }
 }

@@ -20,6 +20,36 @@ There already exist recommended settings and defaults in `.vscode`.
 
 ## NPM
 
+### Bump version
+
+#### Patch, Minor, Major
+
+```sh
+# 0.1.5
+npm version patch -m "chore(release): release %s"
+# -> 0.1.6
+```
+
+#### Beta
+
+```sh
+# 0.1.5-beta.0
+npm version patch -m "chore(release): release %s"
+# -> 0.1.5
+```
+
+```sh
+# 0.1.5-beta.0
+npm version prepatch --preid=beta -m "chore(release): release %s"
+# -> 0.1.6-beta.0
+```
+
+```sh
+# 0.1.5-beta.0
+npm version prerelease --preid=beta -m "chore(release): release %s"
+# -> 0.1.5-beta.0
+```
+
 ### Create package
 
 ```sh
