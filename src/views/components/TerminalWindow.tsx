@@ -1,7 +1,7 @@
+import { Spinner } from '@inkjs/ui';
+import { Scrollable } from '@oliveryasuna/ink-frame-scroll';
 import { Box, Text, useWindowSize } from 'ink';
 import { type ReactNode } from 'react';
-import { Scrollable } from '@oliveryasuna/ink-frame-scroll';
-import { Spinner } from '@inkjs/ui';
 
 interface DividerProps {
   width: number;

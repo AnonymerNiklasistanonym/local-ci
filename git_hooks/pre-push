@@ -1,8 +1,9 @@
 #!/bin/sh
 
-# -> .git/hooks/pre-push
+# local-ci:v0.1.4b:begin
 
-# Terminate if any command is non 0
+# Save current settings and then enable strict behavior (Terminate if any command is non 0)
+SAVED_SETTINGS=$(set +o)
 set -e
 
 # Is file descriptor 1 (stdout) is connected to this terminal (TTY)
@@ -14,8 +15,13 @@ if [ -t 1 ]; then
     # Replace the shell process's standard input (stdin) with the terminal device file
     # Any program launched afterward inherits a real terminal as stdin instead of whatever stdin the hook originally received (a pipe, /dev/null, or a closed fd)
     if exec < /dev/tty; then
-        npm run dev -- -f
+        npm run dev -- --config ./.local-ci.json
     fi
     # Restore original stdin from fd 6 and close it
     exec 0<&6 6<&-
 fi
+
+# Restore the previous behavior
+eval "$SAVED_SETTINGS"
+
+# local-ci:v0.1.4b:end

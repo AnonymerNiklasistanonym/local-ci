@@ -1,5 +1,6 @@
-import { Box, Text } from 'ink';
 import { Badge } from '@inkjs/ui';
+import { Box, Text } from 'ink';
+
 import type { Job } from '../../config/config.js';
 
 interface InfoJobProps {

@@ -1,17 +1,19 @@
-import { Box, Text, renderToString, useApp, useInput } from 'ink';
-import type { CommandOptions, CommandReturnValue, Mode } from './cli/program.js';
-import { useEffect, useState } from 'react';
-import { ErrorView } from './views/Error.js';
-import { InfoView } from './views/InfoView/InfoView.js';
-import type { InternalConfig } from './config/config.js';
-import type { Logger } from 'pino';
-import { ManualExit } from './views/components/ManualExit.js';
-import { RunView } from './views/RunView/RunView.js';
 import { Spinner } from '@inkjs/ui';
-import { name } from './constants/info.js';
+import { Box, Text, renderToString, useApp, useInput } from 'ink';
+import type { Logger } from 'pino';
+import { useEffect, useState } from 'react';
+
 import pkg from '../package.json' with { type: 'json' };
+import type { CommandOptions, CommandReturnValue, Mode } from './cli/program.js';
+import type { InternalConfig } from './config/config.js';
 import { readConfigFile } from './config/readConfigFile.js';
 import { updateConfigFile } from './config/updateConfig.js';
+import { name } from './constants/info.js';
+import { ManualExit } from './views/components/ManualExit.js';
+import { ErrorView } from './views/Error.js';
+import { GitHookInstallerView } from './views/GitHookInstallerView/GitHookInstallerView.js';
+import { InfoView } from './views/InfoView/InfoView.js';
+import { RunView } from './views/RunView/RunView.js';
 
 export interface AppProps extends CommandOptions {
   mode: Mode;
@@ -35,12 +37,15 @@ export function App({ mode, config: configFile = `.${name}.json`, logger, only, 
     // Press q to exit
     if (input === 'q') {
       logger.debug(`User pressed ${input} to close the program`);
+      if (mode !== 'run') {
+        exit({ exitCode: 0 } satisfies CommandReturnValue);
+      }
+      // Close with error in case this is part of a git hook
       const exitCode = 1;
       const additionalOutput = () =>
         renderToString(<ManualExit message="Pipeline was manually quit" exitCode={exitCode} />, {
           columns: process.stdout.columns,
         });
-      // Close with error in case this is part of a git hook
       exit({ additionalOutput, exitCode: 1 } satisfies CommandReturnValue);
     }
   });
@@ -68,21 +73,25 @@ export function App({ mode, config: configFile = `.${name}.json`, logger, only, 
     return <ErrorView error={error} />;
   }
 
-  const content =
-    config !== undefined ? (
-      mode === 'info' ? (
-        <InfoView config={config} logger={logger} {...other} />
-      ) : (
-        <RunView config={config} logger={logger} {...other} />
-      )
-    ) : (
-      <Box flexDirection="column" padding={1}>
-        <Spinner label={`Loading ${pkg.name} config from '${configFile}'...`} />
-        <Box flexDirection="row" paddingTop={1}>
-          <Text dimColor>Press "q" to exit</Text>
-        </Box>
-      </Box>
-    );
+  if (config) {
+    if (mode === 'info') {
+      return <InfoView config={config} logger={logger} {...other} />;
+    }
+    if (mode === 'run') {
+      return <RunView config={config} logger={logger} {...other} />;
+    }
+  }
 
-  return content;
+  if (mode === 'hook') {
+    return <GitHookInstallerView configFile={configFile} logger={logger} {...other} />;
+  }
+
+  return (
+    <Box flexDirection="column" padding={1}>
+      <Spinner label={`Loading ${pkg.name} config from '${configFile}'...`} />
+      <Box flexDirection="row" paddingTop={1}>
+        <Text dimColor>Press "q" to exit</Text>
+      </Box>
+    </Box>
+  );
 }

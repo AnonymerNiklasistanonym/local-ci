@@ -1,9 +1,10 @@
-import { Box, Text, renderToString, useApp } from 'ink';
 import { Badge } from '@inkjs/ui';
-import type { CommandReturnValue } from '../../cli/program.js';
-import type { GenericViewProps } from '../../App.js';
-import { InfoStage } from './InfoStage.js';
+import { Box, Text, renderToString, useApp } from 'ink';
 import { useEffect } from 'react';
+
+import type { GenericViewProps } from '../../App.js';
+import type { CommandReturnValue } from '../../cli/program.js';
+import { InfoStage } from './InfoStage.js';
 
 interface InfoViewProps extends GenericViewProps {
   renderAsString?: boolean;

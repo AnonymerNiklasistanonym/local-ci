@@ -1,8 +1,10 @@
-import type { Logger } from 'pino';
+import { join } from 'path';
 import { Worker } from 'worker_threads';
+
+import type { Logger } from 'pino';
+
 import type { WorkerData } from './data.js';
 import type { WorkerMessage } from './messages.js';
-import { join } from 'path';
 
 /** The worker path may be different when bundled */
 const workerPath = typeof __WORKER_PATH__ !== 'undefined' ? __WORKER_PATH__ : join(import.meta.dirname, 'worker.js');

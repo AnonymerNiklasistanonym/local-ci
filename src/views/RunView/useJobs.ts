@@ -1,12 +1,14 @@
-import type { InternalJob, InternalStage } from '../../config/config.js';
-import type { JobState, StageState } from '../../worker/states.js';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Logger } from 'pino';
-import type { Worker } from 'worker_threads';
-import type { WorkerMessage } from '../../worker/messages.js';
-import { createWorker } from '../../worker/create.js';
 import { join } from 'path';
+import type { Worker } from 'worker_threads';
+
+import type { Logger } from 'pino';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import type { InternalJob, InternalStage } from '../../config/config.js';
 import { name } from '../../constants/info.js';
+import { createWorker } from '../../worker/create.js';
+import type { WorkerMessage } from '../../worker/messages.js';
+import type { JobState, StageState } from '../../worker/states.js';
 
 interface UseJobsProps {
   stages: InternalStage[];

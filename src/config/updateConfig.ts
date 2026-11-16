@@ -1,6 +1,7 @@
-import type { Config, InternalConfig, InternalJob, InternalStage, Job, Stage } from './config.js';
-import type { CommandOptionsFilter } from '../cli/program.js';
 import path from 'path';
+
+import type { CommandOptionsFilter } from '../cli/program.js';
+import type { Config, InternalConfig, InternalJob, InternalStage, Job, Stage } from './config.js';
 
 export const LABEL_PREFIX = ':';
 

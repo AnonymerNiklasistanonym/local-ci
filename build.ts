@@ -1,7 +1,8 @@
-import type { PluginBuild } from 'esbuild';
 import { bunPluginPino } from 'bun-plugin-pino';
-import { name } from './src/constants/info.js';
+import type { PluginBuild } from 'esbuild';
+
 import pkg from './package.json' with { type: 'json' };
+import { name } from './src/constants/info.js';
 
 // Create a binary
 

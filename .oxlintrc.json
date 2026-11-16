@@ -8,7 +8,6 @@
   "rules": {
     "no-console": "off",
     "prefer-const": "error",
-    "sort-imports": "error",
     "sort-keys": "error",
     "@typescript-eslint/no-explicit-any": "warn"
   },

@@ -1,5 +1,6 @@
 import { Box, Text, useApp } from 'ink';
 import { useEffect, useMemo } from 'react';
+
 import type { CommandReturnValue } from '../cli/program.js';
 import { ConfigError } from '../config/configError.js';
 

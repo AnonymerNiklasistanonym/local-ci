@@ -1,19 +1,21 @@
-import { Box, Text, renderToString, useApp, useInput, useWindowSize } from 'ink';
+import { stripVTControlCharacters } from 'node:util';
+
 import { ProgressBar, ThemeProvider } from '@inkjs/ui';
-import { createJobStateDisplayName, createJobStateInfo } from '../helper/state.js';
+import clipboardy from 'clipboardy';
+import { Box, Text, renderToString, useApp, useInput, useWindowSize } from 'ink';
 import { useEffect, useState } from 'react';
-import type { CommandReturnValue } from '../../cli/program.js';
+
 import type { GenericViewProps } from '../../App.js';
+import type { CommandReturnValue } from '../../cli/program.js';
+import { humanTime } from '../../utils/human.js';
 import type { JobState } from '../../worker/states.js';
 import { ManualExit } from '../components/ManualExit.js';
+import { statusColor } from '../constants/status.js';
+import { progressBarTheme } from '../constants/themes.js';
+import { createJobStateDisplayName, createJobStateInfo } from '../helper/state.js';
 import { RunJobDetails } from './RunJobDetails.js';
 import { RunJobLog } from './RunJobLog.js';
 import { RunPipelineStatus } from './RunPipelineStatus.js';
-import clipboardy from 'clipboardy';
-import { humanTime } from '../../utils/human.js';
-import { progressBarTheme } from '../constants/themes.js';
-import { statusColor } from '../constants/status.js';
-import { stripVTControlCharacters } from 'node:util';
 import { useJobs } from './useJobs.js';
 
 interface RunViewProps extends GenericViewProps {

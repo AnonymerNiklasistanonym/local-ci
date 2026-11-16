@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-import type { WorkerLog, WorkerMessage } from './messages.js';
-import { parentPort, threadId, workerData } from 'worker_threads';
-import type { WorkerData } from './data.js';
-import { appendFileSync } from 'fs';
 import { spawn } from 'child_process';
+import { appendFileSync } from 'fs';
+import { parentPort, threadId, workerData } from 'worker_threads';
+
+import type { WorkerData } from './data.js';
+import type { WorkerLog, WorkerMessage } from './messages.js';
 
 // Get data with which the worker is started
 const { commands, cwd, jobId, logFile } = workerData as WorkerData;

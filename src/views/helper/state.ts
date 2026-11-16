@@ -1,5 +1,5 @@
-import type { JobState } from '../../worker/states.js';
 import { humanTime } from '../../utils/human.js';
+import type { JobState } from '../../worker/states.js';
 
 export const createJobStateInfo = (jobState: JobState, logs: boolean = false) => {
   const infos: string[] = [];

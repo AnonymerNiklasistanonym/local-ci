@@ -1,5 +1,6 @@
-import type { ParseErrorExtended } from './readConfigFile.js';
 import type { TLocalizedValidationError } from 'typebox/error';
+
+import type { ParseErrorExtended } from './readConfigFile.js';
 
 export type ConfigErrorType =
   | 'file-ENOENT'

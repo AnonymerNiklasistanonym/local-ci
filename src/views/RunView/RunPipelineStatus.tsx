@@ -1,7 +1,8 @@
 import { Box, Text } from 'ink';
+
+import { humanTime } from '../../utils/human.js';
 import type { JobState, StageState } from '../../worker/states.js';
 import { ElapsedTime } from '../components/ElapsedTime.js';
-import { humanTime } from '../../utils/human.js';
 import { statusColor } from '../constants/status.js';
 
 interface RunPipelineStatusProps {

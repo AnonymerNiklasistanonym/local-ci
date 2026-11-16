@@ -1,7 +1,8 @@
-import { Box, Text, useWindowSize } from 'ink';
-import { isLabel, isNotALabel } from '../../config/updateConfig.js';
 import { Badge } from '@inkjs/ui';
+import { Box, Text, useWindowSize } from 'ink';
+
 import type { CommandOptionsFilter } from '../../cli/program.js';
+import { isLabel, isNotALabel } from '../../config/updateConfig.js';
 import { colors } from '../constants/themes.js';
 
 type FilterInfoProps = CommandOptionsFilter;

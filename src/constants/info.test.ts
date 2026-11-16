@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { extractName } from './info.js';
+
 import pkg from '../../package.json' with { type: 'json' };
+import { extractName } from './info.js';
 
 describe('extractName', () => {
   it('scoped package', () => {

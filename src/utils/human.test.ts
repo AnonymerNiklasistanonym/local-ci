@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { humanTime } from './human.js';
 
 describe('humanTime', () => {

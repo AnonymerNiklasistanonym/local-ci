@@ -1,8 +1,10 @@
-import { type Config, ConfigT } from './config.js';
+import { readFile } from 'fs/promises';
+
 import { type ParseError, type ParseErrorCode, parse, printParseErrorCode, visit } from 'jsonc-parser';
 import Compile from 'typebox/compile';
+
+import { type Config, ConfigT } from './config.js';
 import { ConfigError } from './configError.js';
-import { readFile } from 'fs/promises';
 
 export interface ParseErrorExtended {
   errorCode: ParseErrorCode;

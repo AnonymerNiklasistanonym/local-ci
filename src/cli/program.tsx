@@ -1,16 +1,19 @@
+import { sep } from 'path';
+
 import { Argument, Command } from 'commander';
+import { withFullScreen } from 'fullscreen-ink';
 import { render, renderToString } from 'ink';
-import { App } from '../App.js';
-import { FilterInfo } from '../views/components/FilterInfo.js';
 import type { Logger } from 'pino';
+
+import pkg from '../../package.json' with { type: 'json' };
+import { App } from '../App.js';
+import { name } from '../constants/info.js';
 import { PRODUCTION } from '../env.js';
 import { createLogger } from '../logger.js';
-import { name } from '../constants/info.js';
-import pkg from '../../package.json' with { type: 'json' };
-import { sep } from 'path';
-import { withFullScreen } from 'fullscreen-ink';
+import { FilterInfo } from '../views/components/FilterInfo.js';
 
-export type Mode = 'info' | 'run';
+export const MODES = ['info', 'run', 'hook'] as const;
+export type Mode = (typeof MODES)[number];
 
 export interface CommandOptionsFilter {
   /** Allowlist (like specifying that only a select stage with the name 'test' should be run) */
@@ -37,11 +40,7 @@ export const command = new Command()
   .name(pkg.name)
   .version(pkg.version)
   .description(pkg.description)
-  .addArgument(
-    new Argument('[mode]', 'what should be done')
-      .choices(['info', 'run'] satisfies Mode[])
-      .default('run' satisfies Mode),
-  )
+  .addArgument(new Argument('[mode]', 'what should be done').choices(MODES).default('run' satisfies Mode))
   .option('-v, --verbose', 'show extra info', false)
   .option('-i, --interactive', 'do not close the program if its done to inspect logs', false)
   .option('-f, --fullscreen', 'render in fullscreen (clears screen on exit)', false)
