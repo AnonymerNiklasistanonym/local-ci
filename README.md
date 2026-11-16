@@ -1,6 +1,6 @@
 # local-ci
 
-![NPM Version](https://img.shields.io/npm/v/%40anonymerniklasistanonym%2Flocal-ci)
+[![NPM Version](https://img.shields.io/npm/v/%40anonymerniklasistanonym%2Flocal-ci)](https://www.npmjs.com/package/@anonymerniklasistanonym/local-ci)
 
 With this tool its possible to define a local CI pipeline which can for example be part of a git hook.
 One of the reasons why this was created is that Powershell is horrible at running stuff in parallel (e.g. separate threads).
