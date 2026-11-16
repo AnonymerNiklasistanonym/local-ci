@@ -125,6 +125,12 @@ Example:
 
 If `node` is installed and `npx` is available you can just run the following commands to try it out:
 
+> You may want to use the latest beta for now:
+>
+> ```sh
+> npx @anonymerniklasistanonym/local-ci@beta --version
+> ```
+
 ```sh
 npx @anonymerniklasistanonym/local-ci --version
 # Need to install the following packages:
