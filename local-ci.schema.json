@@ -1,100 +1,159 @@
 {
   "type": "object",
-  "required": ["stages"],
+  "required": ["pipeline"],
   "properties": {
     "$schema": {
       "type": "string"
     },
     "name": {
       "type": "string",
-      "description": "The name of the stage"
+      "description": "The name of the config"
     },
-    "stages": {
+    "pipeline": {
+      "type": "object",
+      "required": ["stages"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the pipeline"
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["jobs"],
+            "properties": {
+              "explicit": {
+                "type": "boolean",
+                "description": "Only run this stage if explicitly requested"
+              },
+              "jobs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["commands"],
+                  "properties": {
+                    "allowedToFail": {
+                      "type": "boolean",
+                      "description": "On failure continue do not stop and continue with the next stage"
+                    },
+                    "commands": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "description": "Commands that should be run in order after each other"
+                            }
+                          },
+                          {
+                            "type": "string",
+                            "description": "Commands that should be run in order after each other"
+                          }
+                        ]
+                      }
+                    },
+                    "cwd": {
+                      "type": "string",
+                      "description": "Directory in which the commands should be run"
+                    },
+                    "explicit": {
+                      "type": "boolean",
+                      "description": "Only run this job if explicitly requested"
+                    },
+                    "labels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "A label to filter jobs"
+                      }
+                    },
+                    "mandatory": {
+                      "type": "boolean",
+                      "description": "Always run this job, even when filter is applied"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "The name of the job"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "A job runs a sequence of commands",
+                  "title": "Job"
+                }
+              },
+              "labels": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "A label to filter stages"
+                }
+              },
+              "mandatory": {
+                "type": "boolean",
+                "description": "Always run this stage, even when filter is applied"
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the stage"
+              }
+            },
+            "additionalProperties": false,
+            "description": "A stage runs jobs in parallel",
+            "title": "Stage"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "description": "A list of stages that should be run in sequence",
+      "title": "Pipeline"
+    },
+    "presets": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["jobs"],
+        "required": ["name"],
         "properties": {
-          "explicit": {
-            "type": "boolean",
-            "description": "Only run this stage if explicitly requested"
-          },
-          "jobs": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": ["commands"],
-              "properties": {
-                "allowedToFail": {
-                  "type": "boolean",
-                  "description": "On failure continue do not stop and continue with the next stage"
-                },
-                "commands": {
-                  "type": "array",
-                  "items": {
-                    "anyOf": [
-                      {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "description": "Commands that should be run in order after each other"
-                        }
-                      },
-                      {
-                        "type": "string",
-                        "description": "Commands that should be run in order after each other"
-                      }
-                    ]
-                  }
-                },
-                "cwd": {
-                  "type": "string",
-                  "description": "Directory in which the commands should be run"
-                },
-                "explicit": {
-                  "type": "boolean",
-                  "description": "Only run this job if explicitly requested"
-                },
-                "labels": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "description": "A label to filter jobs"
-                  }
-                },
-                "mandatory": {
-                  "type": "boolean",
-                  "description": "Always run this job, even when filter is applied"
-                },
-                "name": {
-                  "type": "string",
-                  "description": "The name of the job"
-                }
-              },
-              "additionalProperties": false,
-              "description": "A job runs a sequence of commands",
-              "title": "Job"
-            }
-          },
-          "labels": {
+          "also": {
             "type": "array",
             "items": {
               "type": "string",
-              "description": "A label to filter stages"
-            }
-          },
-          "mandatory": {
-            "type": "boolean",
-            "description": "Always run this stage, even when filter is applied"
+              "description": "Stage, :Job or #Label that should be run additionally to everything that is currently selected"
+            },
+            "additionalProperties": false,
+            "description": "List of stages/labels to also run",
+            "title": "Skip"
           },
           "name": {
             "type": "string",
-            "description": "The name of the stage"
+            "description": "The name of the preset"
+          },
+          "only": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Stage, :Job or #Label that should be run without anything else"
+            },
+            "additionalProperties": false,
+            "description": "Allowlist of stages, jobs or labels to run",
+            "title": "Only"
+          },
+          "skip": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Stage, :Job or #Label that should be skipped"
+            },
+            "additionalProperties": false,
+            "description": "Blocklist of stages, jobs or labels",
+            "title": "Skip"
           }
         },
         "additionalProperties": false,
-        "description": "A stage runs jobs in parallel",
-        "title": "Stage"
+        "description": "A preset contains information to configure running a pipeline",
+        "title": "Config"
       }
     }
   },

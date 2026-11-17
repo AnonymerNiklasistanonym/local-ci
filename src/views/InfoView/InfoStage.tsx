@@ -1,7 +1,7 @@
 import { Badge } from '@inkjs/ui';
 import { Box, Text } from 'ink';
 
-import type { Stage } from '../../config/config.js';
+import type { Stage } from '../../config/pipeline.js';
 import { InfoJob } from './InfoJob.js';
 
 interface InfoStageProps {

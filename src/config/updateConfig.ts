@@ -1,7 +1,8 @@
 import path from 'path';
 
 import type { CommandOptionsFilter } from '../cli/program.js';
-import type { Config, InternalConfig, InternalJob, InternalStage, Job, Stage } from './config.js';
+import type { Config, InternalConfig } from './config.js';
+import type { InternalJob, InternalStage, Job, Stage } from './pipeline.js';
 
 export const LABEL_PREFIX = ':';
 
@@ -58,34 +59,37 @@ export const updateConfigFile = (config: Config, configFile: string, filter: Com
   return {
     ...config,
     displayName: config.name ?? `<${(path.basename(configFile), '.json')}>`,
+    pipeline: {
+      ...config.pipeline,
+      stages: config.pipeline.stages
+        .filter((stage) => filterStage(stage, filter))
+        .reduce((internalStages, currStage) => {
+          const stageId = `${indexStage}`;
+          let indexJob = 1;
+          const jobs = currStage.jobs
+            .filter((job) => filterJob(job, filter))
+            .reduce((internalJobs, currJob) => {
+              const jobId = `${stageId}.${indexJob}`;
+              indexJob++;
+              return internalJobs.concat({
+                ...currJob,
+                id: jobId,
+                stageId,
+              });
+            }, [] as InternalJob[]);
+
+          if (jobs.length === 0) {
+            return internalStages;
+          }
+          indexStage++;
+
+          return internalStages.concat({
+            ...currStage,
+            id: stageId,
+            jobs,
+          });
+        }, [] as InternalStage[]),
+    },
     source: configFile,
-    stages: config.stages
-      .filter((stage) => filterStage(stage, filter))
-      .reduce((internalStages, currStage) => {
-        const stageId = `${indexStage}`;
-        let indexJob = 1;
-        const jobs = currStage.jobs
-          .filter((job) => filterJob(job, filter))
-          .reduce((internalJobs, currJob) => {
-            const jobId = `${stageId}.${indexJob}`;
-            indexJob++;
-            return internalJobs.concat({
-              ...currJob,
-              id: jobId,
-              stageId,
-            });
-          }, [] as InternalJob[]);
-
-        if (jobs.length === 0) {
-          return internalStages;
-        }
-        indexStage++;
-
-        return internalStages.concat({
-          ...currStage,
-          id: stageId,
-          jobs,
-        });
-      }, [] as InternalStage[]),
   };
 };

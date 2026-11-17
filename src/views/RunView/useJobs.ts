@@ -4,7 +4,7 @@ import type { Worker } from 'worker_threads';
 import type { Logger } from 'pino';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { InternalJob, InternalStage } from '../../config/config.js';
+import type { InternalJob, InternalStage } from '../../config/pipeline.js';
 import { name } from '../../constants/info.js';
 import { createWorker } from '../../worker/create.js';
 import type { WorkerMessage } from '../../worker/messages.js';

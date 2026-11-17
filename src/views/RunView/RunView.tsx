@@ -45,7 +45,7 @@ const copyLogs = (jobStage: JobState, stripAnsiSymbols: boolean = true) => {
 
 export function RunView({ config, logger, interactive, fullscreen }: RunViewProps) {
   const { columns } = useWindowSize();
-  const { done, stages, jobs, reset } = useJobs({ logger, stages: config.stages });
+  const { done, stages, jobs, reset } = useJobs({ logger, stages: config.pipeline.stages });
   const { exit } = useApp();
 
   const [activeJobTracker, setActiveJobTracker] = useState<{ id: string } | undefined>(undefined);

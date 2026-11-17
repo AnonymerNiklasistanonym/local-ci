@@ -41,7 +41,7 @@ export function InfoView({ config, logger, renderAsString, ...other }: InfoViewP
       </Box>
 
       {/* The current stages */}
-      {config.stages.map((stage, i) => (
+      {config.pipeline.stages.map((stage, i) => (
         <InfoStage key={i} indexStage={i} stage={stage} />
       ))}
     </Box>

@@ -1,7 +1,7 @@
 import { Badge } from '@inkjs/ui';
 import { Box, Text } from 'ink';
 
-import type { Job } from '../../config/config.js';
+import type { Job } from '../../config/pipeline.js';
 
 interface InfoJobProps {
   indexStage: number;
